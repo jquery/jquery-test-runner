@@ -1,0 +1,44 @@
+{
+	"name": "jquery-test-runner",
+	"version": "0.1.0",
+	"description": "Run QUnit tests using Selenium or BrowserStack",
+	"type": "module",
+	"main": "index.js",
+	"scripts": {
+		"lint": "eslint .",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/jquery/jquery-test-runner.git"
+	},
+	"keywords": [
+		"jquery",
+		"test",
+		"qunit",
+		"selenium",
+		"browserstack"
+	],
+	"license": "MIT",
+	"author": "Timmy Willison <timmywil@users.noreply.github.com>",
+	"bugs": {
+		"url": "https://github.com/jquery/jquery-test-runner/issues"
+	},
+	"homepage": "https://github.com/jquery/jquery-test-runner#readme",
+	"dependencies": {
+		"browserstack-local": "1.5.5",
+		"chalk": "^5.4.1",
+		"diff": "^7.0.0",
+		"exit-hook": "^4.0.0",
+		"jsdom": "^25.0.1",
+		"raw-body": "^3.0.0",
+		"selenium-webdriver": "^4.27.0",
+		"yargs": "^17.7.2"
+	},
+	"devDependencies": {
+		"@types/selenium-webdriver": "^4.1.27",
+		"eslint": "^9.17.0",
+		"eslint-config-jquery": "^3.0.2",
+		"globals": "^15.14.0"
+	}
+}
