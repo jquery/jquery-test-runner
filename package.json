@@ -1,18 +1,25 @@
 {
 	"name": "jquery-test-runner",
 	"version": "0.1.0",
-	"description": "Run QUnit tests using Selenium or BrowserStack",
+	"description": "A test runner built by the jQuery team to run QUnit tests in real browsers using Selenium and BrowserStack",
 	"type": "module",
 	"main": "index.js",
+	"bin": {
+		"jquery-test-runner": "bin/command.js",
+		"jtr": "bin/command.js"
+	},
 	"scripts": {
 		"lint": "eslint .",
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"test": "npm run lint"
 	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/jquery/jquery-test-runner.git"
 	},
 	"keywords": [
+		"jquery-test-runner",
+		"jtr",
+		"jtr-serve",
 		"jquery",
 		"test",
 		"qunit",
@@ -33,6 +40,7 @@
 		"jsdom": "^25.0.1",
 		"raw-body": "^3.0.0",
 		"selenium-webdriver": "^4.27.0",
+		"yaml": "^2.6.1",
 		"yargs": "^17.7.2"
 	},
 	"devDependencies": {

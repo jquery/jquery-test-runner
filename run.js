@@ -32,6 +32,7 @@ export async function run( {
 	hardRetries,
 	headless,
 	isolate,
+	middleware = [],
 	module: modules = [],
 	retries = 0,
 	runId,
@@ -72,74 +73,78 @@ export async function run( {
 	// Create the test app and
 	// hook it up to the reporter
 	const reports = Object.create( null );
-	const app = await createTestServer( async( message ) => {
-		switch ( message.type ) {
-			case "testEnd": {
-				const reportId = message.id;
-				const report = reports[ reportId ];
-				touchBrowser( report.browser );
-				const errors = reportTest( message.data, reportId, report );
-				pendingErrors[ reportId ] ??= Object.create( null );
-				if ( errors ) {
-					pendingErrors[ reportId ][ message.data.name ] = errors;
-				} else {
-					const existing = pendingErrors[ reportId ][ message.data.name ];
+	const app = await createTestServer( {
+		middleware,
 
-					// Show a message for flakey tests
-					if ( existing ) {
-						console.log();
-						console.warn(
-							chalk.italic(
-								chalk.gray( existing.replace( "Test failed", "Test flakey" ) )
-							)
-						);
-						console.log();
-						delete pendingErrors[ reportId ][ message.data.name ];
+		// Hide test server request logs in CLI output
+		quiet: true,
+		report: async( message ) => {
+			switch ( message.type ) {
+				case "testEnd": {
+					const reportId = message.id;
+					const report = reports[ reportId ];
+					touchBrowser( report.browser );
+					const errors = reportTest( message.data, reportId, report );
+					pendingErrors[ reportId ] ??= Object.create( null );
+					if ( errors ) {
+						pendingErrors[ reportId ][ message.data.name ] = errors;
+					} else {
+						const existing = pendingErrors[ reportId ][ message.data.name ];
+
+						// Show a message for flakey tests
+						if ( existing ) {
+							console.log();
+							console.warn(
+								chalk.italic(
+									chalk.gray( existing.replace( "Test failed", "Test flakey" ) )
+								)
+							);
+							console.log();
+							delete pendingErrors[ reportId ][ message.data.name ];
+						}
 					}
+					break;
 				}
-				break;
-			}
-			case "runEnd": {
-				const reportId = message.id;
-				const report = reports[ reportId ];
-				touchBrowser( report.browser );
-				const { failed, total } = reportEnd(
-					message.data,
-					message.id,
-					reports[ reportId ]
-				);
-				report.total = total;
+				case "runEnd": {
+					const reportId = message.id;
+					const report = reports[ reportId ];
+					touchBrowser( report.browser );
+					const { failed, total } = reportEnd(
+						message.data,
+						message.id,
+						reports[ reportId ]
+					);
+					report.total = total;
 
-				// Handle failure
-				if ( failed ) {
-					const retry = retryTest( reportId, retries );
+					// Handle failure
+					if ( failed ) {
+						const retry = retryTest( reportId, retries );
 
-					// Retry if retryTest returns a test
-					if ( retry ) {
-						return retry;
+						// Retry if retryTest returns a test
+						if ( retry ) {
+							return retry;
+						}
+
+						// Return early if hardRetryTest returns true
+						if ( await hardRetryTest( reportId, hardRetries ) ) {
+							return;
+						}
+						errorMessages.push( ...Object.values( pendingErrors[ reportId ] ) );
 					}
 
-					// Return early if hardRetryTest returns true
-					if ( await hardRetryTest( reportId, hardRetries ) ) {
-						return;
-					}
-					errorMessages.push( ...Object.values( pendingErrors[ reportId ] ) );
+					// Run the next test
+					return getNextBrowserTest( reportId );
 				}
-
-				// Run the next test
-				return getNextBrowserTest( reportId );
+				case "ack": {
+					const report = reports[ message.id ];
+					touchBrowser( report.browser );
+					break;
+				}
+				default:
+					console.warn( "Received unknown message type:", message.type );
 			}
-			case "ack": {
-				const report = reports[ message.id ];
-				touchBrowser( report.browser );
-				break;
-			}
-			default:
-				console.warn( "Received unknown message type:", message.type );
 		}
-
-	// Hide test server request logs in CLI output
-	}, { quiet: true } );
+	} );
 
 	// Start up local test server
 	let server;

@@ -58,8 +58,8 @@
 			// sent over the wire after being stringified.
 			if ( typeof value === "symbol" ) {
 
-				// We can *describe* unique symbols, but note that their identity
-				// (e.g., `Symbol() !== Symbol()`) is lost
+				// We can describe unique symbols, but their identity
+				// is lost (e.g., `Symbol() !== Symbol()`)
 				var ctor = Symbol.keyFor( value ) !== undefined ? "Symbol.for" : "Symbol";
 				return ctor + "(" + JSON.stringify( value.description ) + ")";
 			}

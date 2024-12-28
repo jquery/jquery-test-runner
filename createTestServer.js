@@ -1,10 +1,9 @@
 import http from "node:http";
 import { readFile, stat } from "node:fs/promises";
 import { createReadStream } from "node:fs";
-import mockServer from "../middleware-mockserver.cjs";
 import getRawBody from "raw-body";
 
-export async function createTestServer( report, { quiet } = {} ) {
+export async function createTestServer( { report, middleware: userMiddleware = [], quiet } = {} ) {
 	const indexHTML = await readFile( "./test/index.html", "utf8" );
 
 	// Support connect-style middleware
@@ -89,7 +88,7 @@ export async function createTestServer( report, { quiet } = {} ) {
 			res.end(
 				indexHTML.replace(
 					"</head>",
-					"<script src=\"/test/runner/listeners.js\"></script></head>"
+					"<script src=\"/node_modules/jquery-test-runner/listeners.js\"></script></head>"
 				)
 			);
 		} else {
@@ -98,34 +97,38 @@ export async function createTestServer( report, { quiet } = {} ) {
 	} );
 
 	// Bind the reporter
-	use( async( req, res, next ) => {
-		if ( req.url !== "/api/report" || req.method !== "POST" ) {
-			return next();
-		}
-		let body;
-		try {
-			body = JSON.parse( await getRawBody( req ) );
-		} catch ( error ) {
-			if ( error.code === "ECONNABORTED" ) {
+	if ( report ) {
+		use( async( req, res, next ) => {
+			if ( req.url !== "/api/report" || req.method !== "POST" ) {
+				return next();
+			}
+			let body;
+			try {
+				body = JSON.parse( await getRawBody( req ) );
+			} catch ( error ) {
+				if ( error.code === "ECONNABORTED" ) {
+					return;
+				}
+				console.error( error );
+				res.writeHead( 400, { "Content-Type": "application/json" } );
+				res.end( JSON.stringify( { error: "Invalid JSON" } ) );
 				return;
 			}
-			console.error( error );
-			res.writeHead( 400, { "Content-Type": "application/json" } );
-			res.end( JSON.stringify( { error: "Invalid JSON" } ) );
-			return;
-		}
-		const response = await report( body );
-		if ( response ) {
-			res.writeHead( 200, { "Content-Type": "application/json" } );
-			res.end( JSON.stringify( response ) );
-		} else {
-			res.writeHead( 204 );
-			res.end();
-		}
-	} );
+			const response = await report( body );
+			if ( response ) {
+				res.writeHead( 200, { "Content-Type": "application/json" } );
+				res.end( JSON.stringify( response ) );
+			} else {
+				res.writeHead( 204 );
+				res.end();
+			}
+		} );
+	}
 
-	// Hook up mock server
-	use( mockServer() );
+	// Add user middleware
+	userMiddleware.forEach( ( createMiddleware ) => {
+		use( createMiddleware() );
+	} );
 
 	// Serve static files
 	const validMimeTypes = {
@@ -145,11 +148,11 @@ export async function createTestServer( report, { quiet } = {} ) {
 		".log": "text/plain"
 	};
 	use( async( req, res, next ) => {
+
+		// Allow serving anything but node_modules, except for jquery-test-runner
 		if (
-			!req.url.startsWith( "/dist/" ) &&
-			!req.url.startsWith( "/src/" ) &&
-			!req.url.startsWith( "/test/" ) &&
-			!req.url.startsWith( "/external/" )
+			req.url.startsWith( "/node_modules/" ) &&
+			!req.url.startsWith( "/node_modules/jquery-test-runner/" )
 		) {
 			return next();
 		}
