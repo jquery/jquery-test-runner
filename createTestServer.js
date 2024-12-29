@@ -159,6 +159,7 @@ export async function createTestServer( {
 
 		// No .mjs or .cjs files are used in tests
 		".js": "application/javascript",
+		".json": "application/json",
 		".css": "text/css",
 		".html": "text/html",
 		".xml": "application/xml",
@@ -209,7 +210,9 @@ export async function createTestServer( {
 					res.end();
 				} );
 		} else {
-			console.error( `Invalid file extension: ${ ext }` );
+			if ( !quiet ) {
+				console.error( `Invalid file extension: ${ ext }` );
+			}
 			res.writeHead( 404 );
 			res.end();
 		}
