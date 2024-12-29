@@ -6,9 +6,8 @@ import { localTunnel } from "./browserstack/local.js";
 import { reportEnd, reportTest } from "./reporter.js";
 import { createTestServer } from "./createTestServer.js";
 import { buildTestUrl } from "./lib/buildTestUrl.js";
-import { generateHash, printModuleHashes } from "./lib/generateHash.js";
+import { generateHash } from "./lib/generateHash.js";
 import { getBrowserString } from "./lib/getBrowserString.js";
-import { modules as allModules } from "./flags/modules.js";
 import { cleanupAllBrowsers, touchBrowser } from "./browsers.js";
 import {
 	addRun,
@@ -20,29 +19,23 @@ import {
 
 const EXIT_HOOK_WAIT_TIMEOUT = 60 * 1000;
 
-/**
- * Run modules in parallel in different browser instances.
- */
 export async function run( {
 	browser: browserNames = [],
 	browserstack,
 	concurrency,
 	debug,
-	esm,
+	flag: flags = [],
 	hardRetries,
 	headless,
-	isolate,
+	isolatedFlag: isolatedFlags = [],
 	middleware = [],
-	module: modules = [],
 	retries = 0,
 	runId,
 	verbose
 } ) {
+	console.log( isolatedFlags );
 	if ( !browserNames.length ) {
 		browserNames = [ "chrome" ];
-	}
-	if ( !modules.length ) {
-		modules = allModules;
 	}
 	if ( headless && debug ) {
 		throw new Error(
@@ -59,11 +52,11 @@ export async function run( {
 
 	// Convert browser names to browser objects
 	let browsers = browserNames.map( ( b ) => ( { browser: b } ) );
-	const tunnelId = generateHash(
-		`${ Date.now() }-${ modules.join( ":" ) }-${ ( browserstack || [] )
-			.concat( browserNames )
-			.join( ":" ) }`
-	);
+	const hashValue = flags
+		.concat( browserstack || [] )
+		.concat( browserNames )
+		.join( ":" );
+	const tunnelId = generateHash( `${ Date.now() }-${ hashValue }` );
 
 	// A unique identifier for this run
 	if ( !runId ) {
@@ -84,7 +77,7 @@ export async function run( {
 					const reportId = message.id;
 					const report = reports[ reportId ];
 					touchBrowser( report.browser );
-					const errors = reportTest( message.data, reportId, report );
+					const errors = reportTest( message.data, report );
 					pendingErrors[ reportId ] ??= Object.create( null );
 					if ( errors ) {
 						pendingErrors[ reportId ][ message.data.name ] = errors;
@@ -111,7 +104,6 @@ export async function run( {
 					touchBrowser( report.browser );
 					const { failed, total } = reportEnd(
 						message.data,
-						message.id,
 						reports[ reportId ]
 					);
 					report.total = total;
@@ -243,19 +235,18 @@ export async function run( {
 		tunnel = await localTunnel( tunnelId );
 		if ( verbose ) {
 			console.log( "Started BrowserStackLocal." );
-
-			printModuleHashes( modules );
 		}
 	}
 
-	function queueRun( modules, browser ) {
+	function queueRun( browser, isolatedFlag ) {
 		const fullBrowser = getBrowserString( browser, headless );
-		const reportId = generateHash( `${ modules.join( ":" ) } ${ fullBrowser }` );
-		reports[ reportId ] = { browser, headless, modules };
+		const reportId = generateHash( `${ hashValue }-${ isolatedFlag }-${ fullBrowser }` );
+		reports[ reportId ] = { browser, flags, headless, id: reportId, isolatedFlag };
 
-		const url = buildTestUrl( modules, {
+		const url = buildTestUrl( {
 			browserstack,
-			esm,
+			flags,
+			isolatedFlag,
 			jsdom: browser.browser === "jsdom",
 			port,
 			reportId
@@ -265,8 +256,9 @@ export async function run( {
 			browserstack,
 			concurrency,
 			debug,
+			flags,
 			headless,
-			modules,
+			isolatedFlag,
 			reportId,
 			runId,
 			tunnelId,
@@ -277,12 +269,12 @@ export async function run( {
 	}
 
 	for ( const browser of browsers ) {
-		if ( isolate ) {
-			for ( const module of modules ) {
-				queueRun( [ module ], browser );
-			}
+		if ( isolatedFlags.length > 0 ) {
+			isolatedFlags.forEach( ( isolatedFlag ) => {
+				queueRun( browser, isolatedFlag );
+			} );
 		} else {
-			queueRun( modules, browser );
+			queueRun( browser );
 		}
 	}
 
@@ -301,11 +293,17 @@ export async function run( {
 			for ( const report of Object.values( reports ) ) {
 				if ( !report.total ) {
 					stop = true;
+					const allFlags = [
+						...report.flags,
+						...( report.isolatedFlag ? [ report.isolatedFlag ] : [] )
+					];
 					console.error(
 						chalk.red(
-							`No tests were run for ${ report.modules.join(
-								", "
-							) } in ${ getBrowserString( report.browser ) }`
+							`No tests were run for page with flags "${
+								allFlags.join( "&" )
+							}" in ${
+								getBrowserString( report.browser )
+							} (${ report.id })`
 						)
 					);
 				}

@@ -15,7 +15,7 @@ function serializeForDiff( value ) {
 	return `${ value }`;
 }
 
-export function reportTest( test, reportId, { browser, headless } ) {
+export function reportTest( test, { browser, headless, id } ) {
 	if ( test.status === "passed" ) {
 
 		// Write to console without newlines
@@ -26,7 +26,7 @@ export function reportTest( test, reportId, { browser, headless } ) {
 	let message = `${ chalk.bold( `${ test.suiteName }: ${ test.name }` ) }`;
 	message += `\nTest ${ test.status } on ${ chalk.yellow(
 		getBrowserString( browser, headless )
-	) } (${ chalk.bold( reportId ) }).`;
+	) } (${ chalk.bold( id ) }).`;
 
 	// test.assertions only contains passed assertions;
 	// test.errors contains all failed asssertions
@@ -114,12 +114,14 @@ export function reportTest( test, reportId, { browser, headless } ) {
 	}
 }
 
-export function reportEnd( result, reportId, { browser, headless, modules } ) {
+export function reportEnd( result, { browser, flags, headless, id, isolatedFlag } ) {
 	const fullBrowser = getBrowserString( browser, headless );
+	const allFlags = [ ...flags, ...( isolatedFlag ? [ isolatedFlag ] : [] ) ];
+
 	console.log(
 		`\n\nTests finished in ${ prettyMs( result.runtime ) } ` +
-			`for ${ chalk.yellow( modules.join( "," ) ) } ` +
-			`in ${ chalk.yellow( fullBrowser ) } (${ chalk.bold( reportId ) })...`
+			`with flags "${ chalk.yellow( allFlags.join( "&" ) ) }" ` +
+			`in ${ chalk.yellow( fullBrowser ) } (${ chalk.bold( id ) })...`
 	);
 	console.log(
 		( result.status !== "passed" ?

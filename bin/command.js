@@ -6,12 +6,17 @@ import { resolve } from "node:path";
 import { browsers } from "../flags/browsers.js";
 import { getPlan, listBrowsers, stopWorkers } from "../browserstack/api.js";
 import { buildBrowserFromString } from "../browserstack/buildBrowserFromString.js";
-import { modules } from "../flags/modules.js";
 import { run } from "../run.js";
 import readYAML from "../lib/readYAML.js";
 import { createTestServer } from "../createTestServer.js";
 
 const pkg = JSON.parse( await readFile( new URL( "../package.json", import.meta.url ) ) );
+
+function parseFlags( flags ) {
+	return Object.keys( flags ?? [] )
+		.flatMap( ( key ) => flags[ key ]
+		.map( ( value ) => `${ key }=${ value }` ) );
+}
 
 async function parseMiddleware( config, argv ) {
 	const middleware = await Promise.all( [
@@ -38,14 +43,17 @@ yargs( process.argv.slice( 2 ) )
 				description: "Path to a YAML configuration file. " +
 					"Use this to avoid passing options via the command line."
 			} )
-			.option( "module", {
-				alias: "m",
+			.option( "flag", {
+				alias: "f",
 				type: "array",
-				choices: modules,
-				description:
-					"Run tests for a specific module. " +
-					"Pass multiple modules by repeating the option. " +
-					"Defaults to all modules."
+				description: "Add a universal flag to be added as a query parameter " +
+					"to the test URL for all test pages."
+			} )
+			.option( "isolated-flag", {
+				alias: "i",
+				type: "array",
+				description: "Add an isolated flag to be added as a query parameter " +
+					"to the test URL for each. Each isolated flag creates a new test page."
 			} )
 			.option( "browser", {
 				alias: "b",
@@ -70,12 +78,6 @@ yargs( process.argv.slice( 2 ) )
 				description:
 					"Run tests in headless mode. Cannot be used with --debug or --browserstack.",
 				conflicts: [ "debug", "browserstack" ]
-			} )
-			.option( "esm", {
-				alias: "esmodules",
-				type: "boolean",
-				description: "Run tests using jQuery's source, " +
-					"which is written with ECMAScript Modules."
 			} )
 			.option( "concurrency", {
 				type: "number",
@@ -108,11 +110,6 @@ yargs( process.argv.slice( 2 ) )
 				type: "boolean",
 				description: "Log additional information."
 			} )
-			.option( "isolate", {
-				type: "boolean",
-				description: "Run each module by itself in the test page. " +
-					"This can extend testing time."
-			} )
 			.option( "browserstack", {
 				type: "array",
 				description:
@@ -135,8 +132,18 @@ yargs( process.argv.slice( 2 ) )
 		handler: async( { configFile, ...argv } ) => {
 			console.log( "Running tests..." );
 			const config = await readYAML( configFile );
+			const flag = [
+				...parseFlags( config.flags ),
+				...( config.flag ?? [] ),
+				...( argv.flag ?? [] )
+			];
+			const isolatedFlag = [
+				...parseFlags( config.isolatedFlags ),
+				...( config.isolatedFlag ?? [] ),
+				...( argv.isolatedFlag ?? [] )
+			];
 			const middleware = await parseMiddleware( config, argv );
-			return run( { ...config, ...argv, middleware } );
+			return run( { ...config, ...argv, flag, isolatedFlag, middleware } );
 		}
 	} )
 	.command( {
@@ -170,6 +177,7 @@ yargs( process.argv.slice( 2 ) )
 			} );
 		},
 		handler: async( { configFile, quiet, ...argv } ) => {
+			console.log( "Starting server..." );
 			const config = await readYAML( configFile );
 			const middleware = await parseMiddleware( config, argv );
 
@@ -215,6 +223,7 @@ yargs( process.argv.slice( 2 ) )
 			"including any workers running from other projects.\n" +
 			"This can be used as a failsafe when there are too many stray workers.",
 		handler: () => {
+			console.log( "Stopping workers..." );
 			stopWorkers();
 		}
 	} )
