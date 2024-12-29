@@ -190,10 +190,11 @@ yargs( process.argv.slice( 2 ) )
 					"Pass multiple by repeating the option."
 			} );
 		},
-		handler: async( { baseUrl, configFile, quiet, ...argv } ) => {
+		handler: async( { configFile, quiet, ...argv } ) => {
 			console.log( "Starting server..." );
 			const config = await readYAML( configFile );
 			const middleware = await parseMiddleware( config, argv );
+			const baseUrl = config.baseUrl ?? argv.baseUrl ?? "/test/";
 
 			/**
 			 * Run a simple server for loading tests in a browser.

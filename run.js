@@ -35,14 +35,6 @@ export async function run( {
 	runId,
 	verbose
 } ) {
-	if ( !baseUrl ) {
-		throw new Error( "No baseUrl specified." );
-	}
-
-	// Ensure baseUrl ends with a slash
-	if ( !rendsWithSlash.test( baseUrl ) ) {
-		baseUrl += "/";
-	}
 	if ( !browserNames.length ) {
 		browserNames = [ "chrome" ];
 	}
@@ -50,6 +42,11 @@ export async function run( {
 		throw new Error(
 			"Cannot run in headless mode and debug mode at the same time."
 		);
+	}
+
+	// Ensure baseUrl ends with a slash
+	if ( !rendsWithSlash.test( baseUrl ) ) {
+		baseUrl += "/";
 	}
 
 	if ( verbose ) {
