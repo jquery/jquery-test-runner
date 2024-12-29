@@ -3,30 +3,13 @@ import { readFile, stat } from "node:fs/promises";
 import { createReadStream } from "node:fs";
 import getRawBody from "raw-body";
 
-
-function urlWithIndex( baseUrl ) {
-	let url = baseUrl;
-	if ( !url.startsWith( "/" ) ) {
-		url = `/${ url }`;
-	}
-	if ( !url.endsWith( "/index.html" ) ) {
-		url = `${ url }/index.html`;
-	}
-	return url;
-}
-
 export async function createTestServer( {
 	baseUrl, // Expected to always end in /
 	report,
 	middleware: userMiddleware = [],
-	quiet
+	quiet,
+	testUrls = []
 } = {} ) {
-	const urlWithoutSlash = baseUrl.slice( 0, -1 );
-	const indexUrl = urlWithIndex( urlWithoutSlash );
-
-	// Get the index HTML ahead-of-time,
-	// to which we will add the QUnit listener script.
-	const indexHTML = await readFile( `.${ indexUrl }`, "utf8" );
 
 	// Support connect-style middleware
 	const middlewares = [];
@@ -94,7 +77,7 @@ export async function createTestServer( {
 
 	// Redirect to trailing slash
 	use( ( req, res, next ) => {
-		if ( req.parsedUrl.pathname === urlWithoutSlash ) {
+		if ( req.parsedUrl.pathname === baseUrl.replace( /\/$/, "" ) ) {
 			res.redirect( 308, `${ req.parsedUrl.pathname }/${ req.parsedUrl.search }` );
 		} else {
 			next();
@@ -102,12 +85,16 @@ export async function createTestServer( {
 	} );
 
 	// Add a script tag to the index.html to load the QUnit listeners
-	use( ( req, res, next ) => {
+	use( async( req, res, next ) => {
+		const pathname = req.parsedUrl.pathname;
 		if (
 			( req.method === "GET" || req.method === "HEAD" ) &&
-			( req.parsedUrl.pathname === baseUrl ||
-				req.parsedUrl.pathname === indexUrl )
+			( pathname === baseUrl || testUrls.includes( pathname.replace( baseUrl, "" ) ) )
 		) {
+			const indexHTML = await readFile(
+				`.${ pathname }${ pathname.endsWith( ".html" ) ? "" : "index.html" }`,
+				"utf8"
+			);
 			res.writeHead( 200, { "Content-Type": "text/html" } );
 			res.end(
 				indexHTML.replace(

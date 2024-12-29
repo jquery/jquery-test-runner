@@ -51,6 +51,12 @@ yargs( process.argv.slice( 2 ) )
 					"Expected to always start and end with a slash (/). " +
 					"Defaults to \"/test/\"."
 			} )
+			.option( "test-url", {
+				alias: "t",
+				type: "array",
+				description: "URLs to load the tests from. " +
+					"Can be multiple, but defaults to the base URL."
+			} )
 			.option( "flag", {
 				alias: "f",
 				type: "array",
@@ -152,7 +158,14 @@ yargs( process.argv.slice( 2 ) )
 			];
 			const middleware = await parseMiddleware( config, argv );
 
-			return run( { ...config, ...argv, flag, isolatedFlag, middleware } );
+			return run( {
+				...config,
+				testUrl: config.testUrls,
+				...argv,
+				flag,
+				isolatedFlag,
+				middleware
+			} );
 		}
 	} )
 	.command( {

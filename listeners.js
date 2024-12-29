@@ -1,5 +1,4 @@
 ( function() {
-
 	"use strict";
 
 	// Get the report ID from the URL.
@@ -82,29 +81,39 @@
 		return request;
 	}
 
-	// Send acknowledgement to the server.
-	send( "ack" );
+	function listen( QUnit ) {
 
-	QUnit.on( "testEnd", function( data ) {
-		send( "testEnd", data );
-	} );
+		// Send acknowledgement to the server.
+		send( "ack" );
 
-	QUnit.on( "runEnd", function( data ) {
+		QUnit.on( "testEnd", function( data ) {
+			send( "testEnd", data );
+		} );
 
-		// Reduce the payload size.
-		// childSuites is large and unused.
-		data.childSuites = undefined;
+		QUnit.on( "runEnd", function( data ) {
 
-		var request = send( "runEnd", data );
-		request.onload = function() {
-			if ( request.status === 200 && request.responseText ) {
-				try {
-					var json = JSON.parse( request.responseText );
-					window.location = json.url;
-				} catch ( e ) {
-					console.error( e );
+			// Reduce the payload size.
+			// childSuites is large and unused.
+			data.childSuites = undefined;
+
+			var request = send( "runEnd", data );
+			request.onload = function() {
+				if ( request.status === 200 && request.responseText ) {
+					try {
+						var json = JSON.parse( request.responseText );
+						window.location = json.url;
+					} catch ( e ) {
+						console.error( e );
+					}
 				}
-			}
-		};
-	} );
+			};
+		} );
+	}
+
+	// jquery-ui loads QUnit asynchronously
+	if ( typeof QUnit === "undefined" && typeof require !== "undefined" ) {
+		require( [ "qunit" ], listen );
+	} else {
+		listen( QUnit );
+	}
 } )();

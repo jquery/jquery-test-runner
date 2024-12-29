@@ -33,6 +33,7 @@ export async function run( {
 	middleware = [],
 	retries = 0,
 	runId,
+	testUrl: testUrls = [],
 	verbose
 } ) {
 	if ( !browserNames.length ) {
@@ -76,6 +77,7 @@ export async function run( {
 		baseUrl,
 		middleware,
 		quiet: !verbose,
+		testUrls,
 		report: async( message ) => {
 			switch ( message.type ) {
 				case "testEnd": {
@@ -107,10 +109,7 @@ export async function run( {
 					const reportId = message.id;
 					const report = reports[ reportId ];
 					touchBrowser( report.browser );
-					const { failed, total } = reportEnd(
-						message.data,
-						reports[ reportId ]
-					);
+					const { failed, total } = reportEnd( message.data, reports[ reportId ] );
 					report.total = total;
 
 					// Handle failure
@@ -243,10 +242,19 @@ export async function run( {
 		}
 	}
 
-	function queueRun( browser, isolatedFlag ) {
+	function queueRun( browser, { isolatedFlag, testUrl } = {} ) {
 		const fullBrowser = getBrowserString( browser, headless );
-		const reportId = generateHash( `${ hashValue }-${ isolatedFlag }-${ fullBrowser }` );
-		reports[ reportId ] = { browser, flags, headless, id: reportId, isolatedFlag };
+		const reportId = generateHash(
+			`${ hashValue }-${ isolatedFlag }-${ testUrl }-${ fullBrowser }`
+		);
+		reports[ reportId ] = {
+			browser,
+			flags,
+			headless,
+			id: reportId,
+			isolatedFlag,
+			testUrl
+		};
 
 		const url = buildTestUrl( {
 			baseUrl,
@@ -255,7 +263,8 @@ export async function run( {
 			isolatedFlag,
 			jsdom: browser.browser === "jsdom",
 			port,
-			reportId
+			reportId,
+			testUrl
 		} );
 
 		const options = {
@@ -268,6 +277,7 @@ export async function run( {
 			isolatedFlag,
 			reportId,
 			runId,
+			testUrl,
 			tunnelId,
 			verbose
 		};
@@ -278,7 +288,17 @@ export async function run( {
 	for ( const browser of browsers ) {
 		if ( isolatedFlags.length > 0 ) {
 			isolatedFlags.forEach( ( isolatedFlag ) => {
-				queueRun( browser, isolatedFlag );
+				if ( testUrls.length > 0 ) {
+					testUrls.forEach( ( testUrl ) => {
+						queueRun( browser, { isolatedFlag, testUrl } );
+					} );
+				} else {
+					queueRun( browser, { isolatedFlag } );
+				}
+			} );
+		} else if ( testUrls.length > 0 ) {
+			testUrls.forEach( ( testUrl ) => {
+				queueRun( browser, { testUrl } );
 			} );
 		} else {
 			queueRun( browser );
@@ -306,11 +326,9 @@ export async function run( {
 					];
 					console.error(
 						chalk.red(
-							`No tests were run for page with flags "${
-								reportFlags.join( "&" )
-							}" in ${
-								getBrowserString( report.browser )
-							} (${ report.id })`
+							`No tests were run for page with flags "${ reportFlags.join(
+								"&"
+							) }" in ${ getBrowserString( report.browser ) } (${ report.id })`
 						)
 					);
 				}
