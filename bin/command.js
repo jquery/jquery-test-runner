@@ -10,6 +10,7 @@ import { run } from "../run.js";
 import readYAML from "../lib/readYAML.js";
 import { createTestServer } from "../createTestServer.js";
 
+const DEFAULT_PORT = 3000;
 const pkg = JSON.parse( await readFile( new URL( "../package.json", import.meta.url ) ) );
 
 function parseFlags( flags ) {
@@ -43,6 +44,13 @@ yargs( process.argv.slice( 2 ) )
 				description: "Path to a YAML configuration file. " +
 					"Use this to avoid passing options via the command line."
 			} )
+			.option( "base-url", {
+				alias: "u",
+				type: "string",
+				description: "Base URL for the test server. " +
+					"Expected to always start and end with a slash (/). " +
+					"Defaults to \"/test/\"."
+			} )
 			.option( "flag", {
 				alias: "f",
 				type: "array",
@@ -60,10 +68,10 @@ yargs( process.argv.slice( 2 ) )
 				type: "array",
 				choices: browsers,
 				description:
-					"Run tests in a specific browser." +
-					"Pass multiple browsers by repeating the option." +
-					"If using BrowserStack, specify browsers using --browserstack.",
-				default: [ "chrome" ]
+					"Run tests in a specific browser. " +
+					"Pass multiple browsers by repeating the option. " +
+					"If using BrowserStack, specify browsers using --browserstack. " +
+					"Defaults to Chrome."
 			} )
 			.option( "middleware", {
 				alias: "mw",
@@ -108,7 +116,7 @@ yargs( process.argv.slice( 2 ) )
 			.option( "verbose", {
 				alias: "v",
 				type: "boolean",
-				description: "Log additional information."
+				description: "Log additional information, including all test server requests."
 			} )
 			.option( "browserstack", {
 				type: "array",
@@ -143,6 +151,7 @@ yargs( process.argv.slice( 2 ) )
 				...( argv.isolatedFlag ?? [] )
 			];
 			const middleware = await parseMiddleware( config, argv );
+
 			return run( { ...config, ...argv, flag, isolatedFlag, middleware } );
 		}
 	} )
@@ -156,17 +165,22 @@ yargs( process.argv.slice( 2 ) )
 				description: "Path to a YAML configuration file. " +
 					"Use this to avoid passing options via the command line."
 			} )
+			.option( "base-url", {
+				alias: "u",
+				type: "string",
+				description: "Base URL for the test server. " +
+					"Expected to always start and end with a slash (/). " +
+					"Defaults to \"/test/\"."
+			} )
 			.option( "port", {
 				alias: "p",
 				type: "number",
-				description: "Port to listen on.",
-				default: 3000
+				description: "Port to listen on. Defaults to 3000."
 			} )
 			.option( "quiet", {
 				alias: "q",
 				type: "boolean",
-				description: "Whether to log requests to the console.",
-				default: true
+				description: "Whether to log requests to the console. Default: false."
 			} )
 			.option( "middleware", {
 				alias: "mw",
@@ -176,7 +190,7 @@ yargs( process.argv.slice( 2 ) )
 					"Pass multiple by repeating the option."
 			} );
 		},
-		handler: async( { configFile, quiet, ...argv } ) => {
+		handler: async( { baseUrl, configFile, quiet, ...argv } ) => {
 			console.log( "Starting server..." );
 			const config = await readYAML( configFile );
 			const middleware = await parseMiddleware( config, argv );
@@ -186,10 +200,11 @@ yargs( process.argv.slice( 2 ) )
 			 * Note: this server does not support middleware.
 			 * To add middleware, use createTestServer directly.
 			 */
-			const app = await createTestServer( { middleware, quiet } );
+			const app = await createTestServer( { baseUrl, middleware, quiet } );
 
-			return app.listen( { ...config, ...argv, host: "0.0.0.0" }, function() {
-				console.log( `Open tests at http://localhost:${ argv.port }/` );
+			const port = argv.port ?? config.port ?? DEFAULT_PORT;
+			return app.listen( { port, host: "0.0.0.0" }, function() {
+				console.log( `Open tests at http://localhost:${ port }/` );
 			} );
 		}
 	} )

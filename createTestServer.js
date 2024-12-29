@@ -3,8 +3,30 @@ import { readFile, stat } from "node:fs/promises";
 import { createReadStream } from "node:fs";
 import getRawBody from "raw-body";
 
-export async function createTestServer( { report, middleware: userMiddleware = [], quiet } = {} ) {
-	const indexHTML = await readFile( "./test/index.html", "utf8" );
+
+function urlWithIndex( baseUrl ) {
+	let url = baseUrl;
+	if ( !url.startsWith( "/" ) ) {
+		url = `/${ url }`;
+	}
+	if ( !url.endsWith( "/index.html" ) ) {
+		url = `${ url }/index.html`;
+	}
+	return url;
+}
+
+export async function createTestServer( {
+	baseUrl, // Expected to always end in /
+	report,
+	middleware: userMiddleware = [],
+	quiet
+} = {} ) {
+	const urlWithoutSlash = baseUrl.slice( 0, -1 );
+	const indexUrl = urlWithIndex( urlWithoutSlash );
+
+	// Get the index HTML ahead-of-time,
+	// to which we will add the QUnit listener script.
+	const indexHTML = await readFile( `.${ indexUrl }`, "utf8" );
 
 	// Support connect-style middleware
 	const middlewares = [];
@@ -60,17 +82,19 @@ export async function createTestServer( { report, middleware: userMiddleware = [
 	}
 
 	// Redirect home to test page
-	use( ( req, res, next ) => {
-		if ( req.parsedUrl.pathname === "/" ) {
-			res.redirect( "/test/" );
-		} else {
-			next();
-		}
-	} );
+	if ( baseUrl !== "/" ) {
+		use( ( req, res, next ) => {
+			if ( req.parsedUrl.pathname === "/" ) {
+				res.redirect( baseUrl );
+			} else {
+				next();
+			}
+		} );
+	}
 
 	// Redirect to trailing slash
 	use( ( req, res, next ) => {
-		if ( req.parsedUrl.pathname === "/test" ) {
+		if ( req.parsedUrl.pathname === urlWithoutSlash ) {
 			res.redirect( 308, `${ req.parsedUrl.pathname }/${ req.parsedUrl.search }` );
 		} else {
 			next();
@@ -81,8 +105,8 @@ export async function createTestServer( { report, middleware: userMiddleware = [
 	use( ( req, res, next ) => {
 		if (
 			( req.method === "GET" || req.method === "HEAD" ) &&
-			( req.parsedUrl.pathname === "/test/" ||
-				req.parsedUrl.pathname === "/test/index.html" )
+			( req.parsedUrl.pathname === baseUrl ||
+				req.parsedUrl.pathname === indexUrl )
 		) {
 			res.writeHead( 200, { "Content-Type": "text/html" } );
 			res.end(

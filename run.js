@@ -18,8 +18,10 @@ import {
 } from "./queue.js";
 
 const EXIT_HOOK_WAIT_TIMEOUT = 60 * 1000;
+const rendsWithSlash = /\/$/;
 
 export async function run( {
+	baseUrl = "/test/",
 	browser: browserNames = [],
 	browserstack,
 	concurrency,
@@ -33,7 +35,14 @@ export async function run( {
 	runId,
 	verbose
 } ) {
-	console.log( isolatedFlags );
+	if ( !baseUrl ) {
+		throw new Error( "No baseUrl specified." );
+	}
+
+	// Ensure baseUrl ends with a slash
+	if ( !rendsWithSlash.test( baseUrl ) ) {
+		baseUrl += "/";
+	}
 	if ( !browserNames.length ) {
 		browserNames = [ "chrome" ];
 	}
@@ -67,10 +76,9 @@ export async function run( {
 	// hook it up to the reporter
 	const reports = Object.create( null );
 	const app = await createTestServer( {
+		baseUrl,
 		middleware,
-
-		// Hide test server request logs in CLI output
-		quiet: true,
+		quiet: !verbose,
 		report: async( message ) => {
 			switch ( message.type ) {
 				case "testEnd": {
@@ -244,6 +252,7 @@ export async function run( {
 		reports[ reportId ] = { browser, flags, headless, id: reportId, isolatedFlag };
 
 		const url = buildTestUrl( {
+			baseUrl,
 			browserstack,
 			flags,
 			isolatedFlag,
@@ -253,6 +262,7 @@ export async function run( {
 		} );
 
 		const options = {
+			baseUrl,
 			browserstack,
 			concurrency,
 			debug,
@@ -293,14 +303,14 @@ export async function run( {
 			for ( const report of Object.values( reports ) ) {
 				if ( !report.total ) {
 					stop = true;
-					const allFlags = [
+					const reportFlags = [
 						...report.flags,
 						...( report.isolatedFlag ? [ report.isolatedFlag ] : [] )
 					];
 					console.error(
 						chalk.red(
 							`No tests were run for page with flags "${
-								allFlags.join( "&" )
+								reportFlags.join( "&" )
 							}" in ${
 								getBrowserString( report.browser )
 							} (${ report.id })`
