@@ -76,7 +76,7 @@ export async function run( {
 	const app = await createTestServer( {
 		baseUrl,
 		middleware,
-		quiet: !verbose,
+		quiet: true, // Quiet server logs during test runs
 		testUrls,
 		report: async( message ) => {
 			switch ( message.type ) {

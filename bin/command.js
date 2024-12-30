@@ -89,7 +89,7 @@ program
 	)
 	.option(
 		"-v, --verbose",
-		"Log additional information, including all test server requests."
+		"Log additional information."
 	)
 	.option(
 		"--browserstack <configs...>",
