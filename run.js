@@ -29,9 +29,9 @@ export async function run( {
 	flag: flags = [],
 	hardRetries,
 	headless,
-	isolatedFlag: isolatedFlags = [],
 	middleware = [],
 	retries = 0,
+	run: runs = [],
 	runId,
 	testUrl: testUrls = [],
 	verbose
@@ -242,25 +242,17 @@ export async function run( {
 		}
 	}
 
-	function queueRun( browser, { isolatedFlag, testUrl } = {} ) {
+	function queueRun( browser, { run, testUrl } = {} ) {
 		const fullBrowser = getBrowserString( browser, headless );
 		const reportId = generateHash(
-			`${ hashValue }-${ isolatedFlag }-${ testUrl }-${ fullBrowser }`
+			`${ hashValue }-${ run }-${ testUrl }-${ fullBrowser }`
 		);
-		reports[ reportId ] = {
-			browser,
-			flags,
-			headless,
-			id: reportId,
-			isolatedFlag,
-			testUrl
-		};
 
 		const url = buildTestUrl( {
 			baseUrl,
 			browserstack,
 			flags,
-			isolatedFlag,
+			run,
 			jsdom: browser.browser === "jsdom",
 			port,
 			reportId,
@@ -270,30 +262,41 @@ export async function run( {
 		const options = {
 			baseUrl,
 			browserstack,
+			runId,
 			concurrency,
 			debug,
 			flags,
 			headless,
-			isolatedFlag,
+			run,
 			reportId,
-			runId,
 			testUrl,
 			tunnelId,
 			verbose
+		};
+
+		reports[ reportId ] = {
+			browser,
+			flags,
+			fullBrowser,
+			headless,
+			id: reportId,
+			run,
+			testUrl,
+			url
 		};
 
 		addRun( url, browser, options );
 	}
 
 	for ( const browser of browsers ) {
-		if ( isolatedFlags.length > 0 ) {
-			isolatedFlags.forEach( ( isolatedFlag ) => {
+		if ( runs.length > 0 ) {
+			runs.forEach( ( run ) => {
 				if ( testUrls.length > 0 ) {
 					testUrls.forEach( ( testUrl ) => {
-						queueRun( browser, { isolatedFlag, testUrl } );
+						queueRun( browser, { run, testUrl } );
 					} );
 				} else {
-					queueRun( browser, { isolatedFlag } );
+					queueRun( browser, { run } );
 				}
 			} );
 		} else if ( testUrls.length > 0 ) {
@@ -306,7 +309,7 @@ export async function run( {
 	}
 
 	try {
-		console.log( `Starting Run ${ runId }...` );
+		console.log( `Starting test run ${ runId }...` );
 		await runAll();
 	} catch ( error ) {
 		console.error( error );
@@ -322,7 +325,7 @@ export async function run( {
 					stop = true;
 					const reportFlags = [
 						...report.flags,
-						...( report.isolatedFlag ? [ report.isolatedFlag ] : [] )
+						...( report.run ? [ report.run ] : [] )
 					];
 					console.error(
 						chalk.red(

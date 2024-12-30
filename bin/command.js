@@ -6,7 +6,7 @@ import { resolve } from "node:path";
 import { browsers } from "../flags/browsers.js";
 import { getPlan, listBrowsers, stopWorkers } from "../browserstack/api.js";
 import { buildBrowserFromString } from "../browserstack/buildBrowserFromString.js";
-import { run } from "../run.js";
+import { run as runTests } from "../run.js";
 import readYAML from "../lib/readYAML.js";
 import { createTestServer } from "../createTestServer.js";
 
@@ -17,6 +17,31 @@ function parseFlags( flags ) {
 	return Object.keys( flags ?? [] )
 		.flatMap( ( key ) => flags[ key ]
 		.map( ( value ) => `${ key }=${ value }` ) );
+}
+
+// Get all possible combinations of flag values.
+// Example: { "jquery": [ "1.12.4", "3.5.1" ], "jquery-migrate": [ "dev", "min" ] }
+// -> [ "jquery=1.12.4&jquery-migrate=dev", "jquery=3.5.1&jquery-migrate=dev",
+//      "jquery=1.12.4&jquery-migrate=min", "jquery=3.5.1&jquery-migrate=min" ]
+function parseRuns( runs ) {
+	const results = [];
+
+	function dfs( run, keys, startIndex ) {
+		if ( startIndex === keys.length ) {
+			if ( run.length > 0 ) {
+				results.push( run.join( "&" ) );
+			}
+			return;
+		}
+		const key = keys[ startIndex ];
+		const values = runs[ key ];
+		for ( const value of values ) {
+			dfs( run.concat( `${ key }=${ value }` ), keys, startIndex + 1 );
+		}
+	}
+
+	dfs( [], Object.keys( runs ?? [] ), 0 );
+	return results;
 }
 
 async function parseMiddleware( config, argv ) {
@@ -41,12 +66,15 @@ yargs( process.argv.slice( 2 ) )
 			yargs.option( "config-file", {
 				alias: "c",
 				type: "string",
+				example: "jtr-config.yml",
 				description: "Path to a YAML configuration file. " +
-					"Use this to avoid passing options via the command line."
+					"Use this to avoid passing options via the command line. " +
+					"jquery-test-runner will automatically search for jtr.yml or jtr.yaml."
 			} )
 			.option( "base-url", {
 				alias: "u",
 				type: "string",
+				example: "/tests/",
 				description: "Base URL for the test server. " +
 					"Expected to always start and end with a slash (/). " +
 					"Defaults to \"/test/\"."
@@ -59,15 +87,17 @@ yargs( process.argv.slice( 2 ) )
 			} )
 			.option( "flag", {
 				alias: "f",
+				example: "module=core",
 				type: "array",
 				description: "Add a universal flag to be added as a query parameter " +
-					"to the test URL for all test pages."
+					"to the test URL for all test pages. e.g. --flag module=core"
 			} )
-			.option( "isolated-flag", {
-				alias: "i",
+			.option( "run", {
 				type: "array",
-				description: "Add an isolated flag to be added as a query parameter " +
-					"to the test URL for each. Each isolated flag creates a new test page."
+				example: "module=core&esmodules=true",
+				description: "Reuse the same tunnel and browser by adding more runs with " +
+					"different flags. Each run is a separate test run. These have the same " +
+					"format as the --flag option."
 			} )
 			.option( "browser", {
 				alias: "b",
@@ -80,7 +110,7 @@ yargs( process.argv.slice( 2 ) )
 					"Defaults to Chrome."
 			} )
 			.option( "middleware", {
-				alias: "mw",
+				alias: "m",
 				type: "array",
 				description: "Add middleware to the test server by passing " +
 					"the path to a module that exports a middleware factory function. " +
@@ -144,27 +174,26 @@ yargs( process.argv.slice( 2 ) )
 			} );
 		},
 		handler: async( { configFile, ...argv } ) => {
-			console.log( "Running tests..." );
 			const config = await readYAML( configFile );
 			const flag = [
 				...parseFlags( config.flags ),
 				...( config.flag ?? [] ),
 				...( argv.flag ?? [] )
 			];
-			const isolatedFlag = [
-				...parseFlags( config.isolatedFlags ),
-				...( config.isolatedFlag ?? [] ),
-				...( argv.isolatedFlag ?? [] )
+			const run = [
+				...parseRuns( config.runs ),
+				...( config.run ?? [] ),
+				...( argv.run ?? [] )
 			];
 			const middleware = await parseMiddleware( config, argv );
 
-			return run( {
+			return runTests( {
 				...config,
 				testUrl: config.testUrls,
 				...argv,
 				flag,
-				isolatedFlag,
-				middleware
+				middleware,
+				run
 			} );
 		}
 	} )
@@ -196,7 +225,7 @@ yargs( process.argv.slice( 2 ) )
 				description: "Whether to log requests to the console. Default: false."
 			} )
 			.option( "middleware", {
-				alias: "mw",
+				alias: "m",
 				type: "array",
 				description: "Add middleware to the test server by passing " +
 					"the path to a module that exports a middleware factory function. " +
@@ -218,7 +247,7 @@ yargs( process.argv.slice( 2 ) )
 
 			const port = argv.port ?? config.port ?? DEFAULT_PORT;
 			return app.listen( { port, host: "0.0.0.0" }, function() {
-				console.log( `Open tests at http://localhost:${ port }/` );
+				console.log( `Open tests at http://localhost:${ port }${ baseUrl }` );
 			} );
 		}
 	} )

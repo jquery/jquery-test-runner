@@ -1,5 +1,4 @@
 import chalk from "chalk";
-import { getBrowserString } from "./lib/getBrowserString.js";
 import { prettyMs } from "./lib/prettyMs.js";
 import * as Diff from "diff";
 
@@ -15,7 +14,7 @@ function serializeForDiff( value ) {
 	return `${ value }`;
 }
 
-export function reportTest( test, { browser, headless, id } ) {
+export function reportTest( test, { fullBrowser, id } ) {
 	if ( test.status === "passed" ) {
 
 		// Write to console without newlines
@@ -25,7 +24,7 @@ export function reportTest( test, { browser, headless, id } ) {
 
 	let message = `${ chalk.bold( `${ test.suiteName }: ${ test.name }` ) }`;
 	message += `\nTest ${ test.status } on ${ chalk.yellow(
-		getBrowserString( browser, headless )
+		fullBrowser
 	) } (${ chalk.bold( id ) }).`;
 
 	// test.assertions only contains passed assertions;
@@ -114,13 +113,10 @@ export function reportTest( test, { browser, headless, id } ) {
 	}
 }
 
-export function reportEnd( result, { browser, flags, headless, id, isolatedFlag } ) {
-	const fullBrowser = getBrowserString( browser, headless );
-	const allFlags = [ ...flags, ...( isolatedFlag ? [ isolatedFlag ] : [] ) ];
-
+export function reportEnd( result, { fullBrowser, id, url } ) {
 	console.log(
 		`\n\nTests finished in ${ prettyMs( result.runtime ) } ` +
-			`with flags "${ chalk.yellow( allFlags.join( "&" ) ) }" ` +
+			`with URL ${ chalk.yellow( url ) } ` +
 			`in ${ chalk.yellow( fullBrowser ) } (${ chalk.bold( id ) })...`
 	);
 	console.log(
