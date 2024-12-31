@@ -104,28 +104,25 @@ program
 			"for that browser, on a matching OS."
 	)
 	.option( "--run-id <id>", "A unique identifier for the run in BrowserStack." )
-	.action( async( { configFile, ...options } ) => {
+	.action( async( { configFile, ...argv } ) => {
 		const config = await readYAML( configFile );
-		const flag = [
-			...parseFlags( config.flags ),
-			...( config.flag ?? [] ),
-			...( options.flag ?? [] )
-		];
-		const run = [
-			...parseRuns( config.runs ),
-			...( config.run ?? [] ),
-			...( options.run ?? [] )
-		];
-		const middleware = await parseMiddleware( config, options );
-
-		return runTests( {
+		const options = {
+			baseUrl: "/test/",
 			...config,
 			testUrl: config.testUrls,
-			...options,
-			flag,
-			middleware,
-			run
-		} );
+			...argv
+		};
+		options.flag = [
+			...parseFlags( config.flags ),
+			...( options.flag ?? [] )
+		];
+		options.run = [
+			...parseRuns( config.runs ),
+			...( options.run ?? [] )
+		];
+		options.middleware = await parseMiddleware( options );
+
+		return runTests( options );
 	} );
 
 // Define the serve command
@@ -156,22 +153,26 @@ program
 			"passing the path to a module that exports a middleware factory function. " +
 			"Pass multiple by repeating the option."
 	)
-	.action( async( { configFile, quiet, ...options } ) => {
+	.action( async( { configFile, ...argv } ) => {
 		console.log( "Starting server..." );
 		const config = await readYAML( configFile );
-		const middleware = await parseMiddleware( config, options );
-		const baseUrl = config.baseUrl ?? options.baseUrl ?? "/test/";
+		const options = {
+			baseUrl: "/test/",
+			port: DEFAULT_PORT,
+			...config,
+			...argv
+		};
+		options.middleware = await parseMiddleware( options );
 
 		/**
 		 * Run a simple server for loading tests in a browser.
 		 * Note: this server does not support middleware.
 		 * To add middleware, use createTestServer directly.
 		 */
-		const app = await createTestServer( { baseUrl, middleware, quiet } );
+		const app = await createTestServer( options );
 
-		const port = options.port ?? config.port ?? DEFAULT_PORT;
-		return app.listen( { port, host: "0.0.0.0" }, function() {
-			console.log( `Open tests at http://localhost:${ port }${ baseUrl }` );
+		return app.listen( { port: options.port, host: "0.0.0.0" }, function() {
+			console.log( `Open tests at http://localhost:${ options.port }${ options.baseUrl }` );
 		} );
 	} );
 
@@ -249,13 +250,15 @@ function parseRuns( runs ) {
 	return results;
 }
 
-async function parseMiddleware( config, options ) {
+async function parseMiddleware( options ) {
 	const middleware = await Promise.all(
-		[ ...( config.middleware ?? [] ), ...( options.middleware ?? [] ) ].map(
+		( options.middleware ?? [] ).map(
 			async( mw ) => {
-				const module = await import(
-					pathToFileURL( resolve( process.cwd(), mw ) ).toString()
-				);
+				const filepath = pathToFileURL( resolve( process.cwd(), mw ) ).toString();
+				if ( options.verbose ) {
+					console.log( `Loading middleware from ${ filepath }...` );
+				}
+				const module = await import( filepath );
 				return module.default;
 			}
 		)
