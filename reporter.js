@@ -116,7 +116,7 @@ export function reportTest( test, { fullBrowser, id } ) {
 export function reportEnd( result, { fullBrowser, id, url } ) {
 	console.log(
 		`\n\nTests finished in ${ prettyMs( result.runtime ) } ` +
-			`with URL ${ chalk.yellow( url ) } ` +
+			`at ${ chalk.yellow( url ) } ` +
 			`in ${ chalk.yellow( fullBrowser ) } (${ chalk.bold( id ) })...`
 	);
 	console.log(

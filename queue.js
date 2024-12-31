@@ -45,7 +45,7 @@ export function retryTest( reportId, maxRetries ) {
 		test.retries++;
 		if ( test.retries <= maxRetries ) {
 			console.log(
-				`\nRetrying test ${ reportId } with URL ${ chalk.yellow( test.url ) }...${
+				`\nRetrying test ${ reportId } at ${ chalk.yellow( test.url ) }...${
 					test.retries
 				}`
 			);
@@ -63,7 +63,7 @@ export async function hardRetryTest( reportId, maxHardRetries ) {
 		test.hardRetries++;
 		if ( test.hardRetries <= maxHardRetries ) {
 			console.log(
-				`\nHard retrying test ${ reportId } with URL ${ chalk.yellow(
+				`\nHard retrying test ${ reportId } at ${ chalk.yellow(
 					test.url
 				) }...${ test.hardRetries }`
 			);
