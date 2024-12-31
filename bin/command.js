@@ -54,8 +54,7 @@ program
 		"-b, --browser <browsers...>",
 		"Run tests in a specific browser. Pass multiple browsers by repeating the option. " +
 			"If using BrowserStack, specify browsers using --browserstack. " +
-			"Choices: " + browsers.join( ", " ) +
-			". Defaults to Chrome."
+			"Choices: " + browsers.join( ", " ) + ". Defaults to Chrome."
 	)
 	.option(
 		"-m, --middleware <middlewares...>",
@@ -88,10 +87,7 @@ program
 			"when the normal retries are exhausted.",
 		parseInt
 	)
-	.option(
-		"-v, --verbose",
-		"Log additional information."
-	)
+	.option( "-v, --verbose", "Log additional information." )
 	.option(
 		"--browserstack <configs...>",
 		"Run tests in BrowserStack. Requires BROWSERSTACK_USERNAME and " +
@@ -112,14 +108,8 @@ program
 			testUrl: config.testUrls,
 			...argv
 		};
-		options.flag = [
-			...parseFlags( config.flags ),
-			...( options.flag ?? [] )
-		];
-		options.run = [
-			...parseRuns( config.runs ),
-			...( options.run ?? [] )
-		];
+		options.flag = [ ...parseFlags( config.flags ), ...( options.flag ?? [] ) ];
+		options.run = [ ...parseRuns( config.runs ), ...( options.run ?? [] ) ];
 		options.middleware = await parseMiddleware( options );
 
 		return runTests( options );
@@ -139,10 +129,7 @@ program
 		"Base URL for the test server. " +
 			"Expected to always start and end with a slash (/). Defaults to \"/test/\"."
 	)
-	.option(
-		"-p, --port <number>",
-		"Port to listen on. Defaults to 3000."
-	)
+	.option( "-p, --port <number>", "Port to listen on. Defaults to 3000." )
 	.option(
 		"-q, --quiet",
 		"Whether to log requests to the console. Default: false."
@@ -172,7 +159,9 @@ program
 		const app = await createTestServer( options );
 
 		return app.listen( { port: options.port, host: "0.0.0.0" }, function() {
-			console.log( `Open tests at http://localhost:${ options.port }${ options.baseUrl }` );
+			console.log(
+				`Open tests at http://localhost:${ options.port }${ options.baseUrl }`
+			);
 		} );
 	} );
 
@@ -189,7 +178,8 @@ program
 			"Use a colon to indicate a device.\n" +
 			"Examples: \"chrome__windows_10\", \"safari_latest\", " +
 			"\"Mobile Safari\", \"Android Browser_:Google Pixel 8 Pro\".\n" +
-			"Use quotes if spaces are necessary."
+			"Use quotes if spaces are necessary. Requires BROWSERSTACK_USERNAME and " +
+			"BROWSERSTACK_ACCESS_KEY environment variables."
 	)
 	.action( ( filter ) => {
 		console.log( "Listing browsers with filter:", filter );
@@ -202,7 +192,9 @@ program
 	.description(
 		"WARNING: This will stop all BrowserStack workers that may exist and exit," +
 			"including any workers running from other projects.\n" +
-			"This can be used as a failsafe when there are too many stray workers."
+			"This can be used as a failsafe when there are too many stray workers." +
+			"Requires BROWSERSTACK_USERNAME and " +
+			"BROWSERSTACK_ACCESS_KEY environment variables."
 	)
 	.action( () => {
 		console.log( "Stopping workers..." );
@@ -212,7 +204,11 @@ program
 // Define the browserstack-plan command
 program
 	.command( "browserstack-plan" )
-	.description( "Show BrowserStack plan information and exit." )
+	.description(
+		"Show BrowserStack plan information and exit. " +
+			"Requires BROWSERSTACK_USERNAME and " +
+			"BROWSERSTACK_ACCESS_KEY environment variables."
+	)
 	.action( async() => {
 		console.log( await getPlan() );
 	} );
@@ -252,16 +248,14 @@ function parseRuns( runs ) {
 
 async function parseMiddleware( options ) {
 	const middleware = await Promise.all(
-		( options.middleware ?? [] ).map(
-			async( mw ) => {
-				const filepath = pathToFileURL( resolve( process.cwd(), mw ) ).toString();
-				if ( options.verbose ) {
-					console.log( `Loading middleware from ${ filepath }...` );
-				}
-				const module = await import( filepath );
-				return module.default;
+		( options.middleware ?? [] ).map( async( mw ) => {
+			const filepath = pathToFileURL( resolve( process.cwd(), mw ) ).toString();
+			if ( options.verbose ) {
+				console.log( `Loading middleware from ${ filepath }...` );
 			}
-		)
+			const module = await import( filepath );
+			return module.default;
+		} )
 	);
 	return middleware;
 }
