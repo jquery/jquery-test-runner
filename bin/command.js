@@ -253,7 +253,9 @@ async function parseMiddleware( config, options ) {
 	const middleware = await Promise.all(
 		[ ...( config.middleware ?? [] ), ...( options.middleware ?? [] ) ].map(
 			async( mw ) => {
-				const module = await import( pathToFileURL( resolve( process.cwd(), mw ) ) );
+				const module = await import(
+					pathToFileURL( resolve( process.cwd(), mw ) ).toString()
+				);
 				return module.default;
 			}
 		)
