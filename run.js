@@ -323,15 +323,11 @@ export async function run( {
 			for ( const report of Object.values( reports ) ) {
 				if ( !report.total ) {
 					stop = true;
-					const reportFlags = [
-						...report.flags,
-						...( report.run ? [ report.run ] : [] )
-					];
 					console.error(
 						chalk.red(
-							`No tests were run for page with flags "${ reportFlags.join(
-								"&"
-							) }" in ${ getBrowserString( report.browser ) } (${ report.id })`
+							`No tests were run with URL "${ report.url }" in ${ getBrowserString(
+								report.browser
+							) } (${ report.id })`
 						)
 					);
 				}
