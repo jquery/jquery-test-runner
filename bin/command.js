@@ -9,7 +9,7 @@ import { buildBrowserFromString } from "../browserstack/buildBrowserFromString.j
 import { run as runTests } from "../run.js";
 import readYAML from "../lib/readYAML.js";
 import { createTestServer } from "../createTestServer.js";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { pathToFileURL } from "node:url";
 
 const program = new Command();
 const DEFAULT_PORT = 3000;
@@ -253,7 +253,7 @@ async function parseMiddleware( config, options ) {
 	const middleware = await Promise.all(
 		[ ...( config.middleware ?? [] ), ...( options.middleware ?? [] ) ].map(
 			async( mw ) => {
-				const module = await import( fileURLToPath( resolve( process.cwd(), mw ) ) );
+				const module = await import( pathToFileURL( resolve( process.cwd(), mw ) ) );
 				return module.default;
 			}
 		)
