@@ -3,7 +3,7 @@
 import { Command } from "commander";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { browsers } from "../flags/browsers.js";
+import { browsers } from "./browserList.js";
 import { getPlan, listBrowsers, stopWorkers } from "../browserstack/api.js";
 import { buildBrowserFromString } from "../browserstack/buildBrowserFromString.js";
 import { run as runTests } from "../run.js";
