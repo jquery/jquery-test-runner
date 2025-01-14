@@ -1,6 +1,6 @@
 {
   "name": "jquery-test-runner",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A test runner built by the jQuery team to run QUnit tests in real browsers using Selenium and BrowserStack",
   "type": "module",
   "main": "index.js",
