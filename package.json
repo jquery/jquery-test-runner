@@ -10,6 +10,8 @@
   },
   "scripts": {
     "lint": "eslint .",
+    "prepare": "husky",
+    "release": "release-it",
     "test": "npm run lint"
   },
   "repository": {
@@ -44,9 +46,14 @@
     "yaml": "^2.6.1"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.6.1",
+    "@commitlint/config-conventional": "^19.6.0",
+    "@release-it/conventional-changelog": "^10.0.0",
     "@types/selenium-webdriver": "^4.1.27",
     "eslint": "^9.17.0",
     "eslint-config-jquery": "^3.0.2",
-    "globals": "^15.14.0"
+    "globals": "^15.14.0",
+    "husky": "^9.1.7",
+    "release-it": "^18.1.1"
   }
 }
