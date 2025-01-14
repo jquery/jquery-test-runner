@@ -1,0 +1,9 @@
+[submodule "test/jquery"]
+	path = test/jquery
+	url = git@github.com:jquery/jquery.git
+[submodule "test/jquery-migrate"]
+	path = test/jquery-migrate
+	url = git@github.com:jquery/jquery-migrate.git
+[submodule "test/jquery-ui"]
+	path = test/jquery-ui
+	url = git@github.com:jquery/jquery-ui.git
