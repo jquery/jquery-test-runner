@@ -1,0 +1,8 @@
+eslint.config.js
+
+/.editorconfig
+/.gitattributes
+/.gitmodules
+/.mailmap
+
+/test
