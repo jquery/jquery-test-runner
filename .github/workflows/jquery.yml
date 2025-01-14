@@ -37,4 +37,4 @@ jobs:
 
       - name: Run jQuery tests
         working-directory: test/jquery
-        run: npm it
+        run: npm install && npm run test:browser
