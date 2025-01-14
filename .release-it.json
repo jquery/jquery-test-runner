@@ -1,0 +1,39 @@
+{
+  "verbose": 2,
+  "hooks": {
+    "before:init": "npm test"
+  },
+  "git": {
+    "commitMessage": "chore(release): ${version}",
+    "requireBranch": "main",
+    "tagName": "${version}"
+  },
+  "npm": {
+    "publish": true
+  },
+  "github": {
+    "release": true,
+    "tokenRef": "JQUERY_GITHUB_TOKEN"
+  },
+  "plugins": {
+    "@release-it/conventional-changelog": {
+      "preset": {
+        "name": "conventionalcommits",
+        "types": [
+          {
+            "type": "feat",
+            "section": "Features"
+          },
+          {
+            "type": "fix",
+            "section": "Bug Fixes"
+          },
+          {
+            "type": "perf",
+            "section": "Performance Improvements"
+          }
+        ]
+      }
+    }
+  }
+}
