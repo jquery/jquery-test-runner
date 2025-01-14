@@ -98,8 +98,8 @@ export async function createTestServer( {
 			res.writeHead( 200, { "Content-Type": "text/html" } );
 			res.end(
 				indexHTML.replace(
-					"</head>",
-					"<script src=\"/node_modules/jquery-test-runner/listeners.js\"></script></head>"
+					"</body>",
+					"<script src=\"/node_modules/jquery-test-runner/listeners.js\"></script></body>"
 				)
 			);
 		} else {
@@ -161,10 +161,12 @@ export async function createTestServer( {
 	};
 	use( async( req, res, next ) => {
 
-		// Allow serving anything but node_modules, except for jquery-test-runner
+		// Allow serving anything but node_modules,
+		// except for jquery-test-runner and qunit
 		if (
 			req.url.startsWith( "/node_modules/" ) &&
-			!req.url.startsWith( "/node_modules/jquery-test-runner/" )
+			!req.url.startsWith( "/node_modules/jquery-test-runner/" ) &&
+			!req.url.startsWith( "/node_modules/qunit/" )
 		) {
 			return next();
 		}
