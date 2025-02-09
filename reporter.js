@@ -113,10 +113,10 @@ export function reportTest( test, { fullBrowser, id } ) {
 	}
 }
 
-export function reportEnd( result, { fullBrowser, id, url } ) {
+export function reportEnd( result, { descriptiveUrl, fullBrowser, id } ) {
 	console.log(
 		`\n\nTests finished in ${ prettyMs( result.runtime ) } ` +
-			`at ${ chalk.yellow( url ) } ` +
+			`at ${ chalk.yellow( descriptiveUrl ) } ` +
 			`in ${ chalk.yellow( fullBrowser ) } (${ chalk.bold( id ) })...`
 	);
 	console.log(
