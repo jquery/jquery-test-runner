@@ -6,7 +6,7 @@ import { localTunnel } from "./browserstack/local.js";
 import { reportEnd, reportTest } from "./reporter.js";
 import { createTestServer } from "./createTestServer.js";
 import { buildTestUrl } from "./lib/buildTestUrl.js";
-import { generateHash } from "./lib/generateHash.js";
+import { generateHash, generateModuleId } from "./lib/generateHash.js";
 import { getBrowserString } from "./lib/getBrowserString.js";
 import { cleanupAllBrowsers, touchBrowser } from "./browsers.js";
 import {
@@ -27,6 +27,7 @@ export async function run( {
 	concurrency,
 	debug,
 	flag: flags = [],
+	flagHook = defaultFlagHook,
 	hardRetries,
 	headless,
 	middleware = [],
@@ -248,15 +249,21 @@ export async function run( {
 			`${ hashValue }-${ run }-${ testUrl }-${ fullBrowser }`
 		);
 
-		const url = buildTestUrl( {
+		const urlOptions = {
 			baseUrl,
 			browserstack,
 			flags,
 			run,
 			jsdom: browser.browser === "jsdom",
 			port,
-			reportId,
 			testUrl
+		};
+
+		const descriptiveUrl = buildTestUrl( urlOptions );
+		const url = buildTestUrl( {
+			...urlOptions,
+			flagHook,
+			reportId
 		} );
 
 		const options = {
@@ -274,8 +281,9 @@ export async function run( {
 			verbose
 		};
 
-		reports[ reportId ] = {
+		const report = {
 			browser,
+			descriptiveUrl,
 			flags,
 			fullBrowser,
 			headless,
@@ -284,6 +292,8 @@ export async function run( {
 			testUrl,
 			url
 		};
+
+		reports[ reportId ] = report;
 
 		addRun( url, browser, options );
 	}
@@ -362,4 +372,13 @@ export async function run( {
 			}
 		}
 	}
+}
+
+function defaultFlagHook( key, value ) {
+
+	// Convert module flag to module ID
+	if ( key === "module" ) {
+		return [ "moduleId", generateModuleId( value ) ];
+	}
+	return [ key, value ];
 }
