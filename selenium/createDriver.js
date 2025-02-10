@@ -81,7 +81,7 @@ export default async function createDriver( { browserName, headless, url, verbos
 		.build();
 
 	if ( verbose ) {
-		const driverCapabilities = await driver.getCapabilities();
+		const driverCapabilities = driver.getCapabilities();
 		const name = driverCapabilities.getBrowserName();
 		const version = driverCapabilities.getBrowserVersion();
 		console.log( `\nDriver created for ${ name } ${ version }` );
