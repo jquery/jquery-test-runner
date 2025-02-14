@@ -113,6 +113,12 @@ export function reportTest( test, { fullBrowser, id } ) {
 	}
 }
 
+export function reportError( error ) {
+	console.error( chalk.red( `\n\nError: ${ error.message }` ) );
+	console.error( chalk.gray( error.stack ) );
+	return error;
+}
+
 export function reportEnd( result, { descriptiveUrl, fullBrowser, id } ) {
 	console.log(
 		`\n\nTests finished in ${ prettyMs( result.runtime ) } ` +

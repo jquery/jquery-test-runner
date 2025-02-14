@@ -3,7 +3,7 @@ import { asyncExitHook, gracefulExit } from "exit-hook";
 import { getLatestBrowser } from "./browserstack/api.js";
 import { buildBrowserFromString } from "./browserstack/buildBrowserFromString.js";
 import { localTunnel } from "./browserstack/local.js";
-import { reportEnd, reportTest } from "./reporter.js";
+import { reportEnd, reportError, reportTest } from "./reporter.js";
 import { createTestServer } from "./createTestServer.js";
 import { buildTestUrl } from "./lib/buildTestUrl.js";
 import { generateHash, generateModuleId } from "./lib/generateHash.js";
@@ -106,6 +106,15 @@ export async function run( {
 					}
 					break;
 				}
+				case "error": {
+					const reportId = message.id;
+					const report = reports[ reportId ];
+					touchBrowser( report.browser );
+					reportError( message.data );
+					pendingErrors[ reportId ] ??= Object.create( null );
+					pendingErrors[ reportId ][ message.data.message ] = message.data.stack;
+					break;
+				}
 				case "runEnd": {
 					const reportId = message.id;
 					const report = reports[ reportId ];
@@ -127,6 +136,9 @@ export async function run( {
 							return;
 						}
 						errorMessages.push( ...Object.values( pendingErrors[ reportId ] ) );
+						if ( !errorMessages.length ) {
+							errorMessages.push( `Global failure in ${ report.url }` );
+						}
 					}
 
 					// Run the next test
@@ -351,7 +363,8 @@ export async function run( {
 				gracefulExit( 0 );
 			}
 		} else {
-			console.error( chalk.red( `${ errorMessages.length } tests failed.` ) );
+			const len = errorMessages.length;
+			console.error( chalk.red( `${ len } test${ len > 1 ? "s" : "" } failed.` ) );
 			console.log(
 				errorMessages.map( ( error, i ) => `\n${ i + 1 }. ${ error }` ).join( "\n" )
 			);
