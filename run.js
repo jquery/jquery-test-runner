@@ -85,10 +85,10 @@ export async function run( {
 					const reportId = message.id;
 					const report = reports[ reportId ];
 					touchBrowser( report.browser );
-					const errors = reportTest( message.data, report );
+					const errorMessage = reportTest( message.data, report );
 					pendingErrors[ reportId ] ??= Object.create( null );
-					if ( errors ) {
-						pendingErrors[ reportId ][ message.data.name ] = errors;
+					if ( errorMessage ) {
+						pendingErrors[ reportId ][ message.data.name ] = errorMessage;
 					} else {
 						const existing = pendingErrors[ reportId ][ message.data.name ];
 
@@ -112,7 +112,8 @@ export async function run( {
 					touchBrowser( report.browser );
 					reportError( message.data );
 					pendingErrors[ reportId ] ??= Object.create( null );
-					pendingErrors[ reportId ][ message.data.message ] = message.data.stack;
+					pendingErrors[ reportId ][ message.data.message ] =
+						`${ message.data.message }\n${ message.data.stack }`;
 					break;
 				}
 				case "runEnd": {
@@ -347,9 +348,9 @@ export async function run( {
 					stop = true;
 					console.error(
 						chalk.red(
-							`No tests were run with URL "${ report.url }" in ${ getBrowserString(
-								report.browser
-							) } (${ report.id })`
+							`No tests were run with URL "${ report.url }" in ${
+								report.fullBrowser
+							} (${ report.id })`
 						)
 					);
 				}
