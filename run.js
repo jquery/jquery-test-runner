@@ -110,10 +110,9 @@ export async function run( {
 					const reportId = message.id;
 					const report = reports[ reportId ];
 					touchBrowser( report.browser );
-					reportError( message.data );
+					const errorMessage = reportError( message.data );
 					pendingErrors[ reportId ] ??= Object.create( null );
-					pendingErrors[ reportId ][ message.data.message ] =
-						`${ message.data.message }\n${ message.data.stack }`;
+					pendingErrors[ reportId ][ message.data.message ] = errorMessage;
 					break;
 				}
 				case "runEnd": {

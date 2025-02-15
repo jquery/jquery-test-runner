@@ -87,7 +87,11 @@
 		send( "ack" );
 
 		QUnit.on( "error", function( error ) {
-			send( "error", { message: error.message, stack: error.stack } );
+			send( "error", {
+				message: error.message,
+				name: error.name,
+				stack: error.stack
+			} );
 		} );
 
 		QUnit.on( "testEnd", function( data ) {

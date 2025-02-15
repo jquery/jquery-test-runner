@@ -114,9 +114,14 @@ export function reportTest( test, { fullBrowser, id } ) {
 }
 
 export function reportError( error ) {
-	console.error( chalk.red( `\n\nError: ${ error.message }` ) );
-	console.error( chalk.gray( error.stack ) );
-	return error;
+	const title = `${ error.name || "Error" }: ${ error.message }`;
+	let message = chalk.red( title );
+
+	// Chromium error stacks include the title in the first line,
+	// but Firefox error stacks do not.
+	message += `\n${ chalk.gray( error.stack.replace( `${ title }\n`, "" ) ) }`;
+	console.error( `\n\n${ message }` );
+	return message;
 }
 
 export function reportEnd( result, { descriptiveUrl, fullBrowser, id } ) {
