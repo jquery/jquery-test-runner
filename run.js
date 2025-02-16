@@ -3,7 +3,7 @@ import { asyncExitHook, gracefulExit } from "exit-hook";
 import { getLatestBrowser } from "./browserstack/api.js";
 import { buildBrowserFromString } from "./browserstack/buildBrowserFromString.js";
 import { localTunnel } from "./browserstack/local.js";
-import { reportEnd, reportTest } from "./reporter.js";
+import { reportEnd, reportError, reportTest } from "./reporter.js";
 import { createTestServer } from "./createTestServer.js";
 import { buildTestUrl } from "./lib/buildTestUrl.js";
 import { generateHash, generateModuleId } from "./lib/generateHash.js";
@@ -85,10 +85,10 @@ export async function run( {
 					const reportId = message.id;
 					const report = reports[ reportId ];
 					touchBrowser( report.browser );
-					const errors = reportTest( message.data, report );
+					const errorMessage = reportTest( message.data, report );
 					pendingErrors[ reportId ] ??= Object.create( null );
-					if ( errors ) {
-						pendingErrors[ reportId ][ message.data.name ] = errors;
+					if ( errorMessage ) {
+						pendingErrors[ reportId ][ message.data.name ] = errorMessage;
 					} else {
 						const existing = pendingErrors[ reportId ][ message.data.name ];
 
@@ -104,6 +104,15 @@ export async function run( {
 							delete pendingErrors[ reportId ][ message.data.name ];
 						}
 					}
+					break;
+				}
+				case "error": {
+					const reportId = message.id;
+					const report = reports[ reportId ];
+					touchBrowser( report.browser );
+					const errorMessage = reportError( message.data );
+					pendingErrors[ reportId ] ??= Object.create( null );
+					pendingErrors[ reportId ][ message.data.message ] = errorMessage;
 					break;
 				}
 				case "runEnd": {
@@ -127,6 +136,9 @@ export async function run( {
 							return;
 						}
 						errorMessages.push( ...Object.values( pendingErrors[ reportId ] ) );
+						if ( !errorMessages.length ) {
+							errorMessages.push( `Global failure in ${ report.url }` );
+						}
 					}
 
 					// Run the next test
@@ -335,9 +347,9 @@ export async function run( {
 					stop = true;
 					console.error(
 						chalk.red(
-							`No tests were run with URL "${ report.url }" in ${ getBrowserString(
-								report.browser
-							) } (${ report.id })`
+							`No tests were run with URL "${ report.url }" in ${
+								report.fullBrowser
+							} (${ report.id })`
 						)
 					);
 				}
@@ -351,7 +363,8 @@ export async function run( {
 				gracefulExit( 0 );
 			}
 		} else {
-			console.error( chalk.red( `${ errorMessages.length } tests failed.` ) );
+			const len = errorMessages.length;
+			console.error( chalk.red( `${ len } test${ len > 1 ? "s" : "" } failed.` ) );
 			console.log(
 				errorMessages.map( ( error, i ) => `\n${ i + 1 }. ${ error }` ).join( "\n" )
 			);
