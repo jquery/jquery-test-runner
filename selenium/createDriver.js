@@ -21,8 +21,6 @@ export default async function createDriver( { browserName, headless, url, verbos
 		capabilities.setLoggingPrefs( prefs );
 	}
 
-	let driver = new Builder().withCapabilities( capabilities );
-
 	const chromeOptions = new Chrome.Options();
 	chromeOptions.addArguments( "--enable-chrome-browser-cloud-management" );
 
@@ -73,7 +71,7 @@ export default async function createDriver( { browserName, headless, url, verbos
 		}
 	}
 
-	driver = await driver
+	const driver = new Builder().withCapabilities( capabilities )
 		.setChromeOptions( chromeOptions )
 		.setFirefoxOptions( firefoxOptions )
 		.setEdgeOptions( edgeOptions )
@@ -81,7 +79,7 @@ export default async function createDriver( { browserName, headless, url, verbos
 		.build();
 
 	if ( verbose ) {
-		const driverCapabilities = driver.getCapabilities();
+		const driverCapabilities = await driver.getCapabilities();
 		const name = driverCapabilities.getBrowserName();
 		const version = driverCapabilities.getBrowserVersion();
 		console.log( `\nDriver created for ${ name } ${ version }` );
