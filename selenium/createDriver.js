@@ -88,8 +88,11 @@ export default async function createDriver( { browserName, headless, url, verbos
 	// Increase script timeout to 10min
 	await driver.manage().setTimeouts( { script: DRIVER_SCRIPT_TIMEOUT } );
 
-	// Set the first URL for the browser
-	await driver.get( url );
+	// Set the first URL for the browser,
+	// but don't wait for the page to load
+	// so the worker is set up in time
+	// for the ack request.
+	driver.get( url );
 
 	return driver;
 }
