@@ -159,6 +159,7 @@ export async function createTestServer( {
 		".txt": "text/plain",
 		".log": "text/plain"
 	};
+
 	use( async( req, res, next ) => {
 
 		// Allow serving anything but node_modules,

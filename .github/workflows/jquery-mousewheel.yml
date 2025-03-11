@@ -1,0 +1,40 @@
+name: jQuery Mousewheel
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+env:
+  NODE_VERSION: 22.x
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    name: Test jQuery Mousewheel Integration
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          submodules: recursive
+
+      - name: Use Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache
+        uses: actions/cache@d4323d4df104b026a6aa633fdb11d772146be0bf # v4.2.2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-npm-lock-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-${{ env.NODE_VERSION }}-npm-lock-
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run jQuery Mousewheel tests
+        working-directory: test/jquery-mousewheel
+        run: npm it

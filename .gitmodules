@@ -7,3 +7,6 @@
 [submodule "test/jquery-ui"]
 	path = test/jquery-ui
 	url = git@github.com:jquery/jquery-ui.git
+[submodule "test/jquery-mousewheel"]
+	path = test/jquery-mousewheel
+	url = git@github.com:jquery/jquery-mousewheel.git

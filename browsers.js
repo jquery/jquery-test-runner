@@ -103,12 +103,12 @@ export async function createBrowserWorker( url, browser, options, restarts = 0 )
 	worker.browser = browser;
 	worker.restarts = restarts;
 	worker.options = options;
-	touchBrowser( browser );
 	workers[ fullBrowser ] = worker;
 
-	// Wait for the worker to show up in the list
-	// before returning it.
-	return ensureAcknowledged( worker );
+	// Wait for at least one response
+	// from the worker before continuing
+	await ensureAcknowledged( worker );
+	return worker;
 }
 
 export function touchBrowser( browser ) {

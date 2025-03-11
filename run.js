@@ -80,10 +80,14 @@ export async function run( {
 		quiet: true, // Quiet server logs during test runs
 		testUrls,
 		report: async( message ) => {
+			const reportId = message.id;
+			const report = reports[ reportId ];
+
 			switch ( message.type ) {
+				case "ack":
+					touchBrowser( report.browser );
+					break;
 				case "testEnd": {
-					const reportId = message.id;
-					const report = reports[ reportId ];
 					touchBrowser( report.browser );
 					const errorMessage = reportTest( message.data, report );
 					pendingErrors[ reportId ] ??= Object.create( null );
@@ -107,8 +111,6 @@ export async function run( {
 					break;
 				}
 				case "error": {
-					const reportId = message.id;
-					const report = reports[ reportId ];
 					touchBrowser( report.browser );
 					const errorMessage = reportError( message.data );
 					pendingErrors[ reportId ] ??= Object.create( null );
@@ -116,8 +118,6 @@ export async function run( {
 					break;
 				}
 				case "runEnd": {
-					const reportId = message.id;
-					const report = reports[ reportId ];
 					touchBrowser( report.browser );
 					const { failed, total } = reportEnd( message.data, reports[ reportId ] );
 					report.total = total;
@@ -143,11 +143,6 @@ export async function run( {
 
 					// Run the next test
 					return getNextBrowserTest( reportId );
-				}
-				case "ack": {
-					const report = reports[ message.id ];
-					touchBrowser( report.browser );
-					break;
 				}
 				default:
 					console.warn( "Received unknown message type:", message.type );
@@ -340,16 +335,16 @@ export async function run( {
 		}
 	} finally {
 		console.log();
-		if ( errorMessages.length === 0 ) {
+		const numErrors = errorMessages.length;
+		if ( numErrors === 0 ) {
 			let stop = false;
 			for ( const report of Object.values( reports ) ) {
 				if ( !report.total ) {
 					stop = true;
 					console.error(
 						chalk.red(
-							`No tests were run with URL "${ report.url }" in ${
-								report.fullBrowser
-							} (${ report.id })`
+							`No tests were run with URL "${ report.url }" ` +
+								`in ${ report.fullBrowser } (${ report.id })`
 						)
 					);
 				}
@@ -363,8 +358,9 @@ export async function run( {
 				gracefulExit( 0 );
 			}
 		} else {
-			const len = errorMessages.length;
-			console.error( chalk.red( `${ len } test${ len > 1 ? "s" : "" } failed.` ) );
+			console.error(
+				chalk.red( `${ numErrors } test${ numErrors > 1 ? "s" : "" } failed.` )
+			);
 			console.log(
 				errorMessages.map( ( error, i ) => `\n${ i + 1 }. ${ error }` ).join( "\n" )
 			);
