@@ -3,16 +3,10 @@ import globals from "globals";
 
 export default [
 	{
-		ignores: [
-			"test/jquery",
-			"test/jquery-migrate",
-			"test/jquery-ui"
-		]
+		ignores: [ "test" ]
 	},
 	{
-		files: [
-			"**/*.js"
-		],
+		files: [ "**/*.js" ],
 		languageOptions: {
 			ecmaVersion: "latest",
 			globals: {
