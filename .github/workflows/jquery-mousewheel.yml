@@ -23,21 +23,15 @@ jobs:
         uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
-
-      - name: Cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-npm-lock-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-${{ env.NODE_VERSION }}-npm-lock-
+          cache: npm
+          cache-dependency-path: '**/package-lock.json'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Install jQuery Mousewheel dependencies
         working-directory: test/jquery-mousewheel
-        run: npm install
+        run: npm ci
 
       - name: Install local JTR
         working-directory: test/jquery-mousewheel

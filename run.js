@@ -195,9 +195,13 @@ export async function run( {
 	}
 
 	asyncExitHook(
-		async() => {
+		async( signal ) => {
 			await cleanup();
 			await stopServer();
+
+			if ( verbose ) {
+				console.log( `Exited with signal: ${ signal }` );
+			}
 		},
 		{ wait: EXIT_HOOK_WAIT_TIMEOUT }
 	);
