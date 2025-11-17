@@ -195,12 +195,25 @@ export async function run( {
 	}
 
 	asyncExitHook(
-		async() => {
+		async( signal ) => {
 			await cleanup();
 			await stopServer();
+
+			if ( verbose ) {
+				console.log( `Exited with signal: ${ signal }` );
+			}
 		},
 		{ wait: EXIT_HOOK_WAIT_TIMEOUT }
 	);
+
+	// There is currently a bug in exit-hook where
+	// gracefulExit(1) is not longer respected.
+	// Work around by setting process.exitCode instead.
+	// See https://github.com/sindresorhus/exit-hook/issues/42
+	function exitWithError() {
+		process.exitCode = 1;
+		gracefulExit();
+	}
 
 	// Start up BrowserStackLocal
 	let tunnel;
@@ -238,7 +251,7 @@ export async function run( {
 					console.error(
 						chalk.red( `Browser not found: ${ getBrowserString( browser ) }.` )
 					);
-					gracefulExit( 1 );
+					exitWithError();
 				}
 				return latestMatch;
 			} )
@@ -331,7 +344,7 @@ export async function run( {
 	} catch ( error ) {
 		console.error( error );
 		if ( !debug ) {
-			gracefulExit( 1 );
+			exitWithError();
 		}
 	} finally {
 		console.log();
@@ -350,12 +363,13 @@ export async function run( {
 				}
 			}
 			if ( stop ) {
-				return gracefulExit( 1 );
+				exitWithError();
+				return;
 			}
 			console.log( chalk.green( "All tests passed!" ) );
 
 			if ( !debug || browserstack ) {
-				gracefulExit( 0 );
+				gracefulExit();
 			}
 		} else {
 			console.error(
@@ -377,7 +391,7 @@ export async function run( {
 				}
 				console.log( "Press Ctrl+C to exit." );
 			} else {
-				gracefulExit( 1 );
+				exitWithError();
 			}
 		}
 	}

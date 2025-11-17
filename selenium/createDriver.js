@@ -57,7 +57,28 @@ export default async function createDriver( { browserName, headless, url, verbos
 
 	const ieOptions = new IE.Options();
 	ieOptions.setEdgeChromium( true );
-	ieOptions.setEdgePath( "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe" );
+	ieOptions.setEdgePath( "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe" );
+
+	// Set IEDriver path from environment variable or GitHub Actions default
+	let ieService;
+	let ieDriverPath = process.env.IEWEBDRIVER;
+	if ( !ieDriverPath && process.env.GITHUB_ACTIONS ) {
+
+		// The default in GitHub Actions Windows runners
+		ieDriverPath = "C:\\SeleniumWebDrivers\\IEDriver";
+	}
+
+	if ( ieDriverPath ) {
+
+		// Append the executable name if only a directory was provided
+		if ( !ieDriverPath.endsWith( ".exe" ) ) {
+			ieDriverPath = `${ ieDriverPath }\\IEDriverServer.exe`;
+		}
+		if ( verbose ) {
+			console.log( `Setting IEDriver path to ${ ieDriverPath }` );
+		}
+		ieService = new IE.ServiceBuilder( ieDriverPath );
+	}
 
 	if ( headless ) {
 		chromeOptions.addArguments( "--headless=new" );
@@ -71,12 +92,17 @@ export default async function createDriver( { browserName, headless, url, verbos
 		}
 	}
 
-	const driver = new Builder().withCapabilities( capabilities )
+	const builder = new Builder().withCapabilities( capabilities )
 		.setChromeOptions( chromeOptions )
 		.setFirefoxOptions( firefoxOptions )
 		.setEdgeOptions( edgeOptions )
-		.setIeOptions( ieOptions )
-		.build();
+		.setIeOptions( ieOptions );
+
+	if ( ieService ) {
+		builder.setIeService( ieService );
+	}
+
+	const driver = builder.build();
 
 	if ( verbose ) {
 		const driverCapabilities = await driver.getCapabilities();

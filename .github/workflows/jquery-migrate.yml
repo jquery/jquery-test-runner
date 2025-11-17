@@ -1,13 +1,13 @@
 name: jQuery Migrate
 
 on:
-  pull_request:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 env:
-  NODE_VERSION: 22.x
+  NODE_VERSION: 24.x
 
 jobs:
   build-and-test:
@@ -23,18 +23,20 @@ jobs:
         uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
-
-      - name: Cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-npm-lock-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-${{ env.NODE_VERSION }}-npm-lock-
+          cache: npm
+          cache-dependency-path: '**/package-lock.json'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
+
+      - name: Install jQuery Migrate dependencies
+        working-directory: test/jquery-migrate
+        run: npm ci
+
+      - name: Install local JTR
+        working-directory: test/jquery-migrate
+        run: npm install -D ../../
 
       - name: Run jQuery Migrate tests
         working-directory: test/jquery-migrate
-        run: npm it
+        run: npm test
