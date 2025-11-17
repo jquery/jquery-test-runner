@@ -46,3 +46,7 @@ jobs:
       - name: Run jQuery tests
         working-directory: test/jquery
         run: npm run test:browser -- -v
+
+      - name: Run jQuery tests in Edge in IE mode
+        working-directory: test/jquery
+        run: npm run test:ie -- -v
