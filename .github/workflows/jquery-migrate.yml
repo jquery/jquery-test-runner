@@ -1,13 +1,13 @@
 name: jQuery Migrate
 
 on:
-  pull_request:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 env:
-  NODE_VERSION: 22.x
+  NODE_VERSION: 24.x
 
 jobs:
   build-and-test:
