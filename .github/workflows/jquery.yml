@@ -37,6 +37,10 @@ jobs:
         working-directory: test/jquery
         run: npm install -D ../../
 
+      - name: Run jQuery tests in JSDOM
+        working-directory: test/jquery
+        run: npm run test:jsdom -- -v
+
       - name: Run jQuery tests
         working-directory: test/jquery
         run: npm run test:browser -- -v
