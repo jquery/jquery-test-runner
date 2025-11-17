@@ -35,6 +35,14 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Install jQuery Migrate dependencies
+        working-directory: test/jquery-migrate
+        run: npm install
+
+      - name: Install local JTR
+        working-directory: test/jquery-migrate
+        run: npm install -D ../../
+
       - name: Run jQuery Migrate tests
         working-directory: test/jquery-migrate
-        run: npm it
+        run: npm test

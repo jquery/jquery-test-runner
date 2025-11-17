@@ -35,6 +35,14 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Install jQuery dependencies
+        working-directory: test/jquery
+        run: npm install
+
+      - name: Install local JTR
+        working-directory: test/jquery
+        run: npm install -D ../../
+
       - name: Run jQuery tests
         working-directory: test/jquery
-        run: npm install && npm run test:browser -- -v
+        run: npm run test:browser -- -v
