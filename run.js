@@ -208,7 +208,7 @@ export async function run( {
 
 	// There is currently a bug in exit-hook where
 	// gracefulExit(1) is not longer respected.
-	// Work araound by setting process.exitCode instead.
+	// Work around by setting process.exitCode instead.
 	// See https://github.com/sindresorhus/exit-hook/issues/42
 	function exitWithError() {
 		process.exitCode = 1;
