@@ -206,15 +206,6 @@ export async function run( {
 		{ wait: EXIT_HOOK_WAIT_TIMEOUT }
 	);
 
-	// There is currently a bug in exit-hook where
-	// gracefulExit(1) is not longer respected.
-	// Work around by setting process.exitCode instead.
-	// See https://github.com/sindresorhus/exit-hook/issues/42
-	function exitWithError() {
-		process.exitCode = 1;
-		gracefulExit();
-	}
-
 	// Start up BrowserStackLocal
 	let tunnel;
 	if ( browserstack ) {
@@ -251,7 +242,7 @@ export async function run( {
 					console.error(
 						chalk.red( `Browser not found: ${ getBrowserString( browser ) }.` )
 					);
-					exitWithError();
+					gracefulExit( 1 );
 				}
 				return latestMatch;
 			} )
@@ -344,7 +335,7 @@ export async function run( {
 	} catch ( error ) {
 		console.error( error );
 		if ( !debug ) {
-			exitWithError();
+			gracefulExit( 1 );
 		}
 	} finally {
 		console.log();
@@ -363,7 +354,7 @@ export async function run( {
 				}
 			}
 			if ( stop ) {
-				exitWithError();
+				gracefulExit( 1 );
 				return;
 			}
 			console.log( chalk.green( "All tests passed!" ) );
@@ -391,7 +382,7 @@ export async function run( {
 				}
 				console.log( "Press Ctrl+C to exit." );
 			} else {
-				exitWithError();
+				gracefulExit( 1 );
 			}
 		}
 	}
