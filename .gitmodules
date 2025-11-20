@@ -10,3 +10,6 @@
 [submodule "test/jquery-mousewheel"]
 	path = test/jquery-mousewheel
 	url = git@github.com:jquery/jquery-mousewheel.git
+[submodule "test/jquery-color"]
+	path = test/jquery-color
+	url = git@github.com:jquery/jquery-color.git
