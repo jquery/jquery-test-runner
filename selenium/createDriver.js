@@ -2,6 +2,7 @@ import { Builder, Capabilities, logging } from "selenium-webdriver";
 import Chrome from "selenium-webdriver/chrome.js";
 import Edge from "selenium-webdriver/edge.js";
 import Firefox from "selenium-webdriver/firefox.js";
+import Safari from "selenium-webdriver/safari.js";
 import IE from "selenium-webdriver/ie.js";
 import { browserSupportsHeadless } from "../lib/getBrowserString.js";
 
@@ -9,13 +10,19 @@ import { browserSupportsHeadless } from "../lib/getBrowserString.js";
 const DRIVER_SCRIPT_TIMEOUT = 1000 * 60 * 10;
 
 export default async function createDriver( { browserName, headless, url, verbose } ) {
-	const capabilities = Capabilities[ browserName ]();
+
+	// Support: Safari Technology Preview
+	// Handle safari_tp as safari with a custom binary path
+	const isSafariPreview = browserName === "safari_tp";
+	const effectiveBrowserName = isSafariPreview ? "safari" : browserName;
+
+	const capabilities = Capabilities[ effectiveBrowserName ]();
 
 	// Support: IE 11+
 	// When those are set for IE, the process crashes with an error:
 	// "Unable to match capability set 0: goog:loggingPrefs is an unknown
 	// extension capability for IE".
-	if ( browserName !== "ie" ) {
+	if ( effectiveBrowserName !== "ie" ) {
 		const prefs = new logging.Preferences();
 		prefs.setLevel( logging.Type.BROWSER, logging.Level.ALL );
 		capabilities.setLoggingPrefs( prefs );
@@ -55,6 +62,21 @@ export default async function createDriver( { browserName, headless, url, verbos
 		edgeOptions.setEdgeChromiumBinaryPath( process.env.EDGE_BIN );
 	}
 
+	const safariOptions = new Safari.Options();
+
+	// Use Safari Technology Preview if safari_tp browser is selected
+	if ( isSafariPreview ) {
+		if ( verbose ) {
+			console.log( "Using Safari Technology Preview" );
+		}
+		safariOptions.setTechnologyPreview( true );
+
+		// Without it, we're getting an error:
+		// SessionNotCreatedError: Could not create a session: Browser name does
+		// not match (requested: safari; available: Safari Technology Preview)
+		safariOptions.set( "browserName", "Safari Technology Preview" );
+	}
+
 	const ieOptions = new IE.Options();
 	ieOptions.setEdgeChromium( true );
 	ieOptions.setEdgePath( "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe" );
@@ -84,9 +106,9 @@ export default async function createDriver( { browserName, headless, url, verbos
 		chromeOptions.addArguments( "--headless=new" );
 		firefoxOptions.addArguments( "--headless" );
 		edgeOptions.addArguments( "--headless=new" );
-		if ( !browserSupportsHeadless( browserName ) ) {
+		if ( !browserSupportsHeadless( effectiveBrowserName ) ) {
 			console.log(
-				`Headless mode is not supported for ${ browserName }.` +
+				`Headless mode is not supported for ${ effectiveBrowserName }.` +
 					"Running in normal mode instead."
 			);
 		}

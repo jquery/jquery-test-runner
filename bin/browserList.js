@@ -9,6 +9,7 @@ export const browsers = [
 	"firefox",
 	"edge",
 	"safari",
+	"safari_tp",
 	"opera",
 	"yandex",
 	"IE Mobile",
