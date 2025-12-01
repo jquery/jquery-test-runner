@@ -34,6 +34,7 @@ export async function run( {
 	retries = 0,
 	run: runs = [],
 	runId,
+	safariTp,
 	testUrl: testUrls = [],
 	verbose
 } ) {
@@ -43,6 +44,11 @@ export async function run( {
 	if ( headless && debug ) {
 		throw new Error(
 			"Cannot run in headless mode and debug mode at the same time."
+		);
+	}
+	if ( safariTp && browserstack ) {
+		throw new Error(
+			"Cannot use --safari-tp with --browserstack."
 		);
 	}
 
@@ -255,7 +261,7 @@ export async function run( {
 	}
 
 	function queueRun( browser, { run, testUrl } = {} ) {
-		const fullBrowser = getBrowserString( browser, headless );
+		const fullBrowser = getBrowserString( browser, { headless, safariTp } );
 		const reportId = generateHash(
 			`${ hashValue }-${ run }-${ testUrl }-${ fullBrowser }`
 		);
@@ -287,6 +293,7 @@ export async function run( {
 			headless,
 			run,
 			reportId,
+			safariTp,
 			testUrl,
 			tunnelId,
 			verbose

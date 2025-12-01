@@ -77,7 +77,10 @@ export async function hardRetryTest( reportId, maxHardRetries ) {
 export function addRun( url, browser, options ) {
 	queue.push( {
 		browser,
-		fullBrowser: getBrowserString( browser ),
+		fullBrowser: getBrowserString( browser, {
+			headless: options.headless,
+			safariTp: options.safariTp
+		} ),
 		hardRetries: 0,
 		id: options.reportId,
 		url,

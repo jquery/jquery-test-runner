@@ -90,6 +90,7 @@ export async function createBrowserWorker( url, browser, options, restarts = 0 )
 		const driver = await createDriver( {
 			browserName: browser.browser,
 			headless,
+			safariTp: options.safariTp,
 			url,
 			verbose
 		} );

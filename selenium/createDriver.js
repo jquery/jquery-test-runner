@@ -9,20 +9,20 @@ import { browserSupportsHeadless } from "../lib/getBrowserString.js";
 // Set script timeout to 10min
 const DRIVER_SCRIPT_TIMEOUT = 1000 * 60 * 10;
 
-export default async function createDriver( { browserName, headless, url, verbose } ) {
+export default async function createDriver( {
+	browserName, url,
+	headless = false,
+	verbose = false,
+	safariTp = false
+} ) {
 
-	// Support: Safari Technology Preview
-	// Handle safari_tp as safari with a custom binary path
-	const isSafariPreview = browserName === "safari_tp";
-	const effectiveBrowserName = isSafariPreview ? "safari" : browserName;
-
-	const capabilities = Capabilities[ effectiveBrowserName ]();
+	const capabilities = Capabilities[ browserName ]();
 
 	// Support: IE 11+
 	// When those are set for IE, the process crashes with an error:
 	// "Unable to match capability set 0: goog:loggingPrefs is an unknown
 	// extension capability for IE".
-	if ( effectiveBrowserName !== "ie" ) {
+	if ( browserName !== "ie" ) {
 		const prefs = new logging.Preferences();
 		prefs.setLevel( logging.Type.BROWSER, logging.Level.ALL );
 		capabilities.setLoggingPrefs( prefs );
@@ -64,8 +64,8 @@ export default async function createDriver( { browserName, headless, url, verbos
 
 	const safariOptions = new Safari.Options();
 
-	// Use Safari Technology Preview if safari_tp browser is selected
-	if ( isSafariPreview ) {
+	// Use Safari Technology Preview if --safari-tp flag is provided
+	if ( safariTp ) {
 		if ( verbose ) {
 			console.log( "Using Safari Technology Preview" );
 		}
@@ -106,9 +106,9 @@ export default async function createDriver( { browserName, headless, url, verbos
 		chromeOptions.addArguments( "--headless=new" );
 		firefoxOptions.addArguments( "--headless" );
 		edgeOptions.addArguments( "--headless=new" );
-		if ( !browserSupportsHeadless( effectiveBrowserName ) ) {
+		if ( !browserSupportsHeadless( browserName ) ) {
 			console.log(
-				`Headless mode is not supported for ${ effectiveBrowserName }.` +
+				`Headless mode is not supported for ${ browserName }.` +
 					"Running in normal mode instead."
 			);
 		}
@@ -118,6 +118,7 @@ export default async function createDriver( { browserName, headless, url, verbos
 		.setChromeOptions( chromeOptions )
 		.setFirefoxOptions( firefoxOptions )
 		.setEdgeOptions( edgeOptions )
+		.setSafariOptions( safariOptions )
 		.setIeOptions( ieOptions );
 
 	if ( ieService ) {
