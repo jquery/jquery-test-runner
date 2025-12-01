@@ -145,7 +145,7 @@ export async function createTestServer( {
 	const validMimeTypes = {
 
 		// No .mjs or .cjs files are used in tests
-		".js": "application/javascript",
+		".js": "text/javascript",
 		".json": "application/json",
 		".css": "text/css",
 		".html": "text/html",
