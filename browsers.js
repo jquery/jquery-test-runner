@@ -49,7 +49,10 @@ export async function createBrowserWorker( url, browser, options, restarts = 0 )
 			) }`
 		);
 	}
-	const { browserstack, debug, headless, reportId, runId, tunnelId, verbose } = options;
+	const {
+		browserstack, debug, headless, reportId, runId, safariTp, tunnelId, verbose
+	} = options;
+
 	while ( await maxWorkersReached( options ) ) {
 		if ( verbose ) {
 			console.log( "\nWaiting for available sessions..." );
@@ -90,6 +93,7 @@ export async function createBrowserWorker( url, browser, options, restarts = 0 )
 		const driver = await createDriver( {
 			browserName: browser.browser,
 			headless,
+			safariTp,
 			url,
 			verbose
 		} );

@@ -57,6 +57,11 @@ program
 			"Choices: " + browsers.join( ", " ) + ". Defaults to Chrome."
 	)
 	.option(
+		"--safari-tp",
+		"Use Safari Technology Preview instead of regular Safari. " +
+			"Only works with --browser safari and cannot be used with --browserstack."
+	)
+	.option(
 		"-m, --middleware <middlewares...>",
 		"Add middleware to the test server by passing the path to a module that exports " +
 			"a middleware factory function. Pass multiple by repeating the option."

@@ -2,13 +2,20 @@ import { Builder, Capabilities, logging } from "selenium-webdriver";
 import Chrome from "selenium-webdriver/chrome.js";
 import Edge from "selenium-webdriver/edge.js";
 import Firefox from "selenium-webdriver/firefox.js";
+import Safari from "selenium-webdriver/safari.js";
 import IE from "selenium-webdriver/ie.js";
 import { browserSupportsHeadless } from "../lib/getBrowserString.js";
 
 // Set script timeout to 10min
 const DRIVER_SCRIPT_TIMEOUT = 1000 * 60 * 10;
 
-export default async function createDriver( { browserName, headless, url, verbose } ) {
+export default async function createDriver( {
+	browserName, url,
+	headless = false,
+	verbose = false,
+	safariTp = false
+} ) {
+
 	const capabilities = Capabilities[ browserName ]();
 
 	// Support: IE 11+
@@ -55,6 +62,21 @@ export default async function createDriver( { browserName, headless, url, verbos
 		edgeOptions.setEdgeChromiumBinaryPath( process.env.EDGE_BIN );
 	}
 
+	const safariOptions = new Safari.Options();
+
+	// Use Safari Technology Preview if --safari-tp flag is provided
+	if ( safariTp ) {
+		if ( verbose ) {
+			console.log( "Using Safari Technology Preview" );
+		}
+		safariOptions.setTechnologyPreview( true );
+
+		// Without it, we're getting an error:
+		// SessionNotCreatedError: Could not create a session: Browser name does
+		// not match (requested: safari; available: Safari Technology Preview)
+		safariOptions.set( "browserName", "Safari Technology Preview" );
+	}
+
 	const ieOptions = new IE.Options();
 	ieOptions.setEdgeChromium( true );
 	ieOptions.setEdgePath( "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe" );
@@ -96,6 +118,7 @@ export default async function createDriver( { browserName, headless, url, verbos
 		.setChromeOptions( chromeOptions )
 		.setFirefoxOptions( firefoxOptions )
 		.setEdgeOptions( edgeOptions )
+		.setSafariOptions( safariOptions )
 		.setIeOptions( ieOptions );
 
 	if ( ieService ) {
