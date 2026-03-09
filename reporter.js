@@ -2,6 +2,8 @@ import chalk from "chalk";
 import { prettyMs } from "./lib/prettyMs.js";
 import * as Diff from "diff";
 
+const MAX_DOTS_PER_LINE = 100;
+
 function serializeForDiff( value ) {
 
 	// Use naive serialization for everything except types with confusable values
@@ -14,11 +16,23 @@ function serializeForDiff( value ) {
 	return `${ value }`;
 }
 
+let currDots = 0;
+function writeDot() {
+	if ( currDots >= MAX_DOTS_PER_LINE ) {
+
+		// Write a newline character occasionally to force a CI output flush.
+		process.stdout.write( "\n" );
+		currDots = 0;
+	}
+	currDots++;
+	process.stdout.write( "." );
+}
+
 export function reportTest( test, { fullBrowser, id } ) {
 	if ( test.status === "passed" ) {
 
-		// Write to console without newlines
-		process.stdout.write( "." );
+		// Write to console
+		writeDot();
 		return;
 	}
 
