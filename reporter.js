@@ -128,6 +128,8 @@ export function reportTest( test, { fullBrowser, id } ) {
 }
 
 export function reportError( error ) {
+	currDots = 0;
+
 	const title = `${ error.name || "Error" }: ${ error.message }`;
 	let message = chalk.red( title );
 
@@ -139,6 +141,8 @@ export function reportError( error ) {
 }
 
 export function reportEnd( result, { descriptiveUrl, fullBrowser, id } ) {
+	currDots = 0;
+
 	console.log(
 		`\n\nTests finished in ${ prettyMs( result.runtime ) } ` +
 			`at ${ chalk.yellow( descriptiveUrl ) } ` +
