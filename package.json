@@ -35,26 +35,26 @@
   },
   "homepage": "https://github.com/jquery/jquery-test-runner#readme",
   "dependencies": {
-    "browserstack-local": "^1.5.12",
+    "browserstack-local": "^1.5.13",
     "chalk": "^5.6.2",
-    "commander": "^14.0.3",
-    "diff": "^8.0.4",
+    "commander": "^15.0.0",
+    "diff": "^9.0.0",
     "exit-hook": "^5.1.0",
-    "jsdom": "^29.0.1",
+    "jsdom": "^29.1.1",
     "raw-body": "^3.0.2",
-    "selenium-webdriver": "^4.41.0",
-    "yaml": "^2.8.3"
+    "selenium-webdriver": "^4.45.0",
+    "yaml": "^2.9.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "^20.5.0",
-    "@commitlint/config-conventional": "^20.5.0",
-    "@release-it/conventional-changelog": "^10.0.6",
-    "@types/selenium-webdriver": "^4.35.5",
-    "conventional-changelog-conventionalcommits": "^9.3.1",
-    "eslint": "^9.39.1",
+    "@commitlint/cli": "^21.2.0",
+    "@commitlint/config-conventional": "^21.2.0",
+    "@release-it/conventional-changelog": "^11.0.1",
+    "@types/selenium-webdriver": "^4.35.6",
+    "conventional-changelog-conventionalcommits": "^10.2.0",
+    "eslint": "^10.6.0",
     "eslint-config-jquery": "^3.0.2",
-    "globals": "^17.4.0",
+    "globals": "^17.7.0",
     "husky": "^9.1.7",
-    "release-it": "^19.2.4"
+    "release-it": "^20.2.1"
   }
 }
