@@ -2,7 +2,7 @@ import chalk from "chalk";
 import { prettyMs } from "./lib/prettyMs.js";
 import * as Diff from "diff";
 
-const MAX_DOTS_PER_LINE = 100;
+const MAX_DOTS_PER_LINE = 80;
 
 function serializeForDiff( value ) {
 
